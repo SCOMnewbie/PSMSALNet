@@ -21,7 +21,7 @@ ModuleVersion = '0.0.1'
 GUID = 'c52512aa-f12b-4956-8312-9cfeba907761'
 
 # Author of this module
-Author = 'Scomnewbie'
+Author = 'Francois LEON'
 
 # Company or vendor of this module
 CompanyName = 'Scomnewbie'
@@ -33,7 +33,7 @@ Copyright = '(c) Scomnewbie. All rights reserved.'
 Description = 'Module used to interact with Microsoft Authentication library'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '5.0'
+PowerShellVersion = '7.2'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -51,10 +51,10 @@ PowerShellVersion = '5.0'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @()
+# RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
-# RequiredAssemblies = @()
+RequiredAssemblies = @('./lib/Microsoft.Identity.Client.dll', './lib/Microsoft.IdentityModel.Abstractions.dll', './lib/Microsoft.Identity.Client.Broker.dll', './lib/Microsoft.Identity.Client.Extensions.Msal.dll', './lib/DeviceCodeHelper.dll', './lib/Microsoft.Identity.Client.NativeInterop.dll', './lib/WAMHelper.dll')
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -94,7 +94,6 @@ PrivateData = @{
 
     PSData = @{
 
-        Prerelease = ''
         # Tags applied to this module. These help with module discovery in online galleries.
         # Tags = @()
 
@@ -130,16 +129,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -55,6 +55,24 @@ BeforeAll {
 }
 
 Describe 'Changelog Management' -Tag 'Changelog' {
+    It 'Changelog has been updated' -Skip:(
+        -not ([bool](Get-Command git -ErrorAction SilentlyContinue) -and
+            [bool](&(Get-Process -Id $PID).Path -NoProfile -Command 'git rev-parse --is-inside-work-tree 2>$null'))
+    ) {
+        # Get the list of changed files compared with branch main
+        $headCommit = &git rev-parse HEAD
+        $defaultBranchCommit = &git rev-parse origin/main
+        $filesChanged = &git @('diff', "$defaultBranchCommit...$headCommit", '--name-only')
+        $filesStagedAndUnstaged = &git @('diff', 'HEAD', '--name-only')
+
+        $filesChanged += $filesStagedAndUnstaged
+
+        # Only check if there are any changed files.
+        if ($filesChanged)
+        {
+            $filesChanged | Should -Contain 'CHANGELOG.md' -Because 'the CHANGELOG.md must be updated with at least one entry in the Unreleased section for each PR'
+        }
+    }
 
     It 'Changelog format compliant with keepachangelog format' -Skip:(![bool](Get-Command git -EA SilentlyContinue)) {
         { Get-ChangelogData -Path (Join-Path $ProjectPath 'CHANGELOG.md') -ErrorAction Stop } | Should -Not -Throw

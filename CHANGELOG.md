@@ -7,25 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- For new features.
+- Thing added in V 0.0.3
 
 ### Changed
 
-- For changes in existing functionality.
-
-### Deprecated
-
-- For soon-to-be removed features.
+- Thing changed in V 0.0.3
 
 ### Removed
 
-- For now removed features.
+- Thing removed in V 0.0.3
 
-### Fixed
 
-- For any bug fix.
+## [0.0.2] - 2023-08-17
 
-### Security
+### Added
 
-- In case of vulnerabilities.
+- Thing added in V 0.0.2
 
+### Changed
+
+- Thing changed in V 0.0.2
+
+### Removed
+
+- Thing removed in V 0.0.2
+
+## [0.0.1] - 2023-08-16
+
+### Added
+
+- Thing added in V 0.0.1
+- blah
+
+### Changed
+
+- Thing changed in V 0.0.1
+
+### Removed
+
+- Thing removed in V 0.0.1

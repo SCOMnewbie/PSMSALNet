@@ -20,5 +20,5 @@
     'DscResource.AnalyzerRules' = 'latest'
     xDscResourceDesigner        = 'latest'
     'DscResource.DocGenerator'  = 'latest'
+    PlatyPs                      = 'latest'
 }
-

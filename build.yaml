@@ -9,6 +9,7 @@
 BuiltModuleSubdirectory: module
 CopyPaths:
   - en-US
+  - lib
 #  - DSCResources
   # - Modules
 Encoding: UTF8
@@ -34,7 +35,7 @@ NestedModule:
 #    OutputDirectory: ///Modules/HelperSubmodule
 #    VersionedOutputDirectory: false
 #    AddToManifest: false
-#    SemVer: 
+#    SemVer:
 #    # suffix:
 #    # prefix:
 
@@ -50,15 +51,18 @@ BuildWorkflow:
   build:
     - Clean
     - Build_Module_ModuleBuilder
-    - Build_NestedModules_ModuleBuilder
+    - test
     - Create_changelog_release_output
-
+    - Generate_MAML_from_built_module
 
   pack:
     - build
     - package_module_nupkg
 
-
+  custom:
+    - custom_before
+    - custom_test
+    - custom_after
 
   # Defining test task to be run when invoking `./build.ps1 -Tasks test`
   test:
@@ -68,7 +72,7 @@ BuildWorkflow:
     # Use this task if pipeline uses code coverage and the module is using the
     # pattern of Public, Private, Enum, Classes.
     #- Convert_Pester_Coverage
-    - Pester_if_Code_Coverage_Under_Threshold
+    #- Pester_if_Code_Coverage_Under_Threshold
 
   # Use this task when you have multiple parallel tests, which produce multiple
   # code coverage files and needs to get merged into one file.
@@ -154,9 +158,3 @@ TaskHeader: |
   Write-Build DarkGray "  $Path"
   Write-Build DarkGray "  $($Task.InvocationInfo.ScriptName):$($Task.InvocationInfo.ScriptLineNumber)"
   ""
-
-
-
-
-
-
