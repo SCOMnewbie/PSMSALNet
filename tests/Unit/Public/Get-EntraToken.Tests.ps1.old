@@ -1,4 +1,4 @@
-BeforeAll {
+﻿BeforeAll {
     $Module = 'PSMSALNet'
     $FunctionName = 'Get-EntraToken'
 
@@ -11,8 +11,6 @@ BeforeAll {
 Describe 'Testing <FunctionName> function' {
 
     It 'Should have synopsis documentation' {
-    write-host $PSScriptRoot
-    write-host "$PSScriptRoot\..\source\Public\$($FunctionName).ps1"
       (Get-Help $FunctionName).synopsis | Should -Not -BeNullOrEmpty
     }
 

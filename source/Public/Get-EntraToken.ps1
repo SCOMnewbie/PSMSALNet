@@ -1,18 +1,53 @@
 ﻿function Get-EntraToken {
     <#
     .SYNOPSIS
-    This function will sync members from an onprem group to an AAD group. AD is the source of truth.
+    This function will interact with MSAL.
     .DESCRIPTION
-    Important: The is a little bit of harcoded value because this module has been designed for a specific purpose but this function is easily extendable to generic usage.
-    This function will sync members from an onprem group to an AAD group. AD is the source of truth. This command will take only AD users account where the attribute
-    extensionAttribute12 is set to SyncToAzureAD. Indeed, we want to be sure users we will mirror belongs to AAD already.
-    This function will run using a deleguated API permission under a specific user service account.
-    .PARAMETER DisplayName
-    Specify the name of the group you create in AAD.
-    .PARAMETER MailNickname
-    Specify the mailnickname attribute you will assign.In our case the AWS projectID.
-    .PARAMETER OnPremGroupToCopyFrom
-    Specify the samAccountNAme of the Onprem AD group. You will copy members from this group too with this command.
+    Use this function to generate JWT Entra tokens. By default the token cache will be in memory.
+    .PARAMETER ClientCredentialFlowWithSecret
+    The ClientCredentialFlowWithSecret parameter defines you want to generate an entra token with the client credential flow with secrets.
+    .PARAMETER ClientCredentialFlowWithCertificate
+    The ClientCredentialFlowWithCertificate parameter defines you want to generate an entra token with the client credential flow with certificates.
+    .PARAMETER PublicAuthorizationCodeFlow
+    The PublicAuthorizationCodeFlow parameter defines you want to generate an entra token with the Authorization Code flow with PKCE. No secrets are required.
+    .PARAMETER DeviceCodeFlow
+    The DeviceCodeFlow parameter defines you want to generate an entra token with the Device code flow. No secrets are required.
+    .PARAMETER WAMFlow
+    The WAMFlow parameter defines you want to generate an entra token with the Windows WAM (Web Account Manager). No secrets are required.
+    .PARAMETER OnBehalfFlowWithSecret
+    The OnBehalfFlowWithSecret parameter defines you want to generate an entra token with the On behalf flows with secrets.
+    .PARAMETER OnBehalfFlowWithCertificate
+    The OnBehalfFlowWithCertificate parameter defines you want to generate an entra token with the On behalf flows with certificates.
+    .PARAMETER FederatedCredentialFlowWithAssertion
+    The FederatedCredentialFlowWithAssertion parameter defines you want to generate an entra token with the federated credential authentication method. A token assertion is required.
+    .PARAMETER UserAssertion
+    The UserAssertion parameter defines the token you want to use in both the OBO flow or the federated credential flow.
+    .PARAMETER SystemManagedIdentity
+    The SystemManagedIdentity parameter defines the token you want to generate an entra token with the system managed identity.
+    .PARAMETER UserManagedIdentity
+    The UserManagedIdentity parameter defines the token you want to generate an entra token with the user managed identity.
+    .PARAMETER ClientId
+    The ClientId parameter defines the client Id (application Id) you want to use to generate a token.
+    .PARAMETER ClientSecret
+    The ClientSecret parameter defines the client secret you want to use in your authentication flow.
+    .PARAMETER ClientCertificate
+    The ClientCertificate parameter defines the client certificate you want to use in your authentication flow.
+    .PARAMETER WithoutCaching
+    The WithoutCaching parameter defines the you want to force a token refresh instead of using the MSAL cache.
+    .PARAMETER AzureCloudInstance
+    The AzureCloudInstance parameter defines the Azure environment you plan to consume. By default, the module target Azure public.
+    .PARAMETER TenantId
+    The TenantId parameter defines the Entra tenant Id. If you don't specificy this parameter, the common authority will be used (multi-tenants applications)
+    .PARAMETER RedirectUri
+    The RedirectUri parameter defines the redirect uri required for several public workflow. By default this parameter equal http://localhost.
+    .PARAMETER Resource
+    The Resource parameter defines the resource you want to consume. A scope is composed of a resource and a permission. This parameter is pre-filled with Azure audiences like Graph API, KeyVault or Custom (your API)
+    .PARAMETER CustomResource
+    The CustomResource parameter defines your custom resource you exposed in Entra (api://<...>). You have to use it in addition of the Custom Resource parameter value.
+    .PARAMETER Permissions
+    The Permissions parameter defines the permissions you request. This is usually what is after api://<...>/<Permission> or with Graph API @("User.Read","Group.Read"). the combinaison of Resource and permission create the scope.
+    .PARAMETER ExtraScopesToConsent
+    The ExtraScopesToConsent parameter defines the extra scopes you need following the Entra limitation where you can call only one resource per call. Thi parameter is useful when you need Graph API and ARM token.
     .EXAMPLE
 
     Sync-AADGroupFromAD -DisplayName "Test_FL_graph-owner" -MailNickname "123456789012" -OnPremGroupToCopyFrom "myADgroup" -Verbose
@@ -113,10 +148,10 @@
         [guid] $TenantId,
 
         # Address to return to upon receiving a response from the authority.
-        [Parameter(Mandatory, ParameterSetName = 'PublicAuthorizationCodeFlow')]
-        [Parameter(Mandatory, ParameterSetName = 'DeviceCodeFlow')]
-        [Parameter(Mandatory, ParameterSetName = 'WAMFlow')]
-        [uri] $RedirectUri,
+        [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
+        [Parameter(ParameterSetName = 'DeviceCodeFlow')]
+        [Parameter(ParameterSetName = 'WAMFlow')]
+        [uri] $RedirectUri = 'http://localhost',
 
         #Scope = Resource + Permission
         [parameter(Mandatory)]

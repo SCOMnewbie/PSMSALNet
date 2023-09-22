@@ -1,4 +1,6 @@
-﻿<#
+﻿function ConvertTo-X509Certificate2
+{
+    <#
 .SYNOPSIS
 This function will output a X509Certificate2 certificate.
 .DESCRIPTION
@@ -72,58 +74,94 @@ VERSION HISTORY
 POSSIBLE IMPROVEMENT
     -
 #>
-function ConvertTo-X509Certificate2 {
     [CmdletBinding()]
     [OutputType([System.Security.Cryptography.X509Certificates.X509Certificate2])]
     #[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword","")]
     param(
-        [parameter(Mandatory,ParameterSetName="pfx")]
+        [parameter(Mandatory, ParameterSetName = 'pfx')]
         [ValidateScript({
-            if((Test-Path $_) -AND ($_ -like '*.pfx')){$true}
-            else{throw "Path $_ is not valid"}
-        })]
+                if ((Test-Path $_) -AND ($_ -like '*.pfx'))
+                {
+                    $true
+                }
+                else
+                {
+                    throw "Path $_ is not valid"
+                }
+            })]
         [String]$PfxPath,
-        [parameter(Mandatory,ParameterSetName="pem")]
+        [parameter(Mandatory, ParameterSetName = 'pem')]
         [ValidateScript({
-            if((Test-Path $_) -AND ($_ -like '*.pem')){$true}
-            else{throw "Path $_ is not valid"}
-        })]
+                if ((Test-Path $_) -AND ($_ -like '*.pem'))
+                {
+                    $true
+                }
+                else
+                {
+                    throw "Path $_ is not valid"
+                }
+            })]
         [String]$PemPath,
-        [parameter(Mandatory,ParameterSetName="crt")]
+        [parameter(Mandatory, ParameterSetName = 'crt')]
         [ValidateScript({
-            if((Test-Path $_) -AND ($_ -like '*.crt')){$true}
-            else{throw "Path $_ is not valid"}
-        })]
+                if ((Test-Path $_) -AND ($_ -like '*.crt'))
+                {
+                    $true
+                }
+                else
+                {
+                    throw "Path $_ is not valid"
+                }
+            })]
         [String]$CrtPath,
-        [parameter(Mandatory,ParameterSetName="cer")]
+        [parameter(Mandatory, ParameterSetName = 'cer')]
         [ValidateScript({
-            if((Test-Path $_) -AND ($_ -like '*.cer')){$true}
-            else{throw "Path $_ is not valid"}
-        })]
+                if ((Test-Path $_) -AND ($_ -like '*.cer'))
+                {
+                    $true
+                }
+                else
+                {
+                    throw "Path $_ is not valid"
+                }
+            })]
         [String]$CerPath,
-        [parameter(ParameterSetName="pfx")]
+        [parameter(ParameterSetName = 'pfx')]
         [ValidateScript({
-            if($_.Length -gt 0){$true}
-            else{throw 'SecureString argument contained no data.'}
-        })]
+                if ($_.Length -gt 0)
+                {
+                    $true
+                }
+                else
+                {
+                    throw 'SecureString argument contained no data.'
+                }
+            })]
         [securestring]$Password,
-        [parameter(ParameterSetName="pem")]
+        [parameter(ParameterSetName = 'pem')]
         [ValidateScript({
-            if((Test-Path $_) -AND ( $(get-content $_ | select-object -First 1) -eq '-----BEGIN PRIVATE KEY-----' )){$true}
-            else{throw "Path $_ is not valid or private key is not visible"}
-        })]
+                if ((Test-Path $_) -AND ( $(Get-Content $_ | Select-Object -First 1) -eq '-----BEGIN PRIVATE KEY-----' ))
+                {
+                    $true
+                }
+                else
+                {
+                    throw "Path $_ is not valid or private key is not visible"
+                }
+            })]
         [string]$PrivateKeyPath,
-        [parameter(Mandatory,ParameterSetName="keyvault")]
+        [parameter(Mandatory, ParameterSetName = 'keyvault')]
         [string]$KeyVaultCertificatePath, #https://ubuntukv415745.vault.azure.net/certificates/test/5d69153b75214245ab72fa21b9c06bfb
-        [parameter(Mandatory,ParameterSetName="keyvault")]
+        [parameter(Mandatory, ParameterSetName = 'keyvault')]
         [string]$AccessToken, #(Get-AzAccessToken -Resource "https://vault.azure.net").Token
-        [parameter(ParameterSetName="keyvault")]
+        [parameter(ParameterSetName = 'keyvault')]
         [string]$APIVersion = '7.3',
-        [parameter(ParameterSetName="keyvault")]
+        [parameter(ParameterSetName = 'keyvault')]
         [switch]$ExportPrivateKey
     )
 
-    Begin {
+    Begin
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
 
         # Just keep what we need to avoid useless switch iteration
@@ -137,69 +175,86 @@ function ConvertTo-X509Certificate2 {
 
     } #begin
 
-    Process {
-        switch ($PSBoundParameters.Keys) {
+    Process
+    {
+        switch ($PSBoundParameters.Keys)
+        {
 
-            'CerPath' {
+            'CerPath'
+            {
                 #Even if it's not the same format crt and cer is using the same method. I will duplicate code for readability.
                 [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($(Get-Item -Path $CerPath))
                 break
             }
 
-            'CrtPath' {
+            'CrtPath'
+            {
                 [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($(Get-Item -Path $CrtPath))
                 break
             }
 
-            'PfxPath' {
-                if($Password){
+            'PfxPath'
+            {
+                if ($Password)
+                {
                     #Means private key protected by password
                     # Means Linux/Windows/MacOS running on Powershell 7 (Yes v6 does not count :D)
-                    [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($(Get-Item -Path $PfxPath),$(ConvertFrom-SecureString -SecureString $Password -AsPlainText))
+                    [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($(Get-Item -Path $PfxPath), $(ConvertFrom-SecureString -SecureString $Password -AsPlainText))
                     break
                 }
-                else{
+                else
+                {
                     #Means no password to protect the private key
                     [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($(Get-Item -Path $PfxPath))
                     break
                 }
             }
 
-            'PemPath' {
-                if($PrivateKeyPath){
+            'PemPath'
+            {
+                if ($PrivateKeyPath)
+                {
                     #Means private key protected by password
                     #openssl pkcs12 -in ./scomnewbie.pfx -out ./scomnewbie2.pem  # Privatekey will be encrypted + no -nodes means passphrase required
                     #openssl rsa -in ./scomnewbie2.pem -out privatekey_rsa.key  #Enter passphrase + decode PK
-                    [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPemFile($(Get-Item -Path $PemPath),$(Get-Item -Path $PrivateKeyPath))
+                    [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPemFile($(Get-Item -Path $PemPath), $(Get-Item -Path $PrivateKeyPath))
                     break
                 }
-                else{
+                else
+                {
                     #Means no password to protect the private key
                     #openssl pkcs12 -in ./scomnewbie.pfx -out ./scomnewbie.pem -nodes # WARNING No more password anymore + PK decoded
-                    if($(get-content -Path $PemPath) -match '-----BEGIN PRIVATE KEY-----'){
+                    if ($(Get-Content -Path $PemPath) -match '-----BEGIN PRIVATE KEY-----')
+                    {
                         [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPemFile($(Get-Item -Path $PemPath)) # Make sure private key is not encrypted!
                         break
                     }
-                    else{
+                    else
+                    {
                         throw "Make sure you're private key is not encrypted"
                     }
                 }
             }
 
-            'KeyVaultCertificatePath' {
-                if($ExportPrivateKey){
+            'KeyVaultCertificatePath'
+            {
+                if ($ExportPrivateKey)
+                {
                     $CertInfo = Get-KVCertificateWithPrivateKey -KeyVaultCertificatePath $KeyVaultCertificatePath -AccessToken $AccessToken -APIVersion $APIVersion
                     $pfxUnprotectedBytes = [Convert]::FromBase64String($CertInfo.value)
                     [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($pfxUnprotectedBytes)
                 }
-                else{
+                else
+                {
                     $CertInfo = Get-KVCertificateWithPublicKey -KeyVaultCertificatePath $KeyVaultCertificatePath -AccessToken $AccessToken -APIVersion $APIVersion
-                    if($IsWindows){
+                    if ($IsWindows)
+                    {
                         $cBytes = [System.Text.Encoding]::UTF8.GetBytes($CertInfo.cer)
                         [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($cBytes)
                     }
-                    else{
-                        $ModCertInfo =@"
+                    else
+                    {
+                        $ModCertInfo = @"
 -----BEGIN CERTIFICATE-----
 $($CertInfo.cer)
 -----END CERTIFICATE-----
@@ -212,7 +267,8 @@ $($CertInfo.cer)
         }#end switch
     } #process
 
-    End {
+    End
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] Ending $($myinvocation.mycommand)"
     } #end
 }

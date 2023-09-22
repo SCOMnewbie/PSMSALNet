@@ -1,16 +1,19 @@
-﻿BeforeAll {
-    $Module = 'PSMSALNet'
-    $FunctionName = 'Get-KVCertificateWithPrivateKey'
+﻿$ProjectPath = "$PSScriptRoot\..\..\.." | Convert-Path
+$ProjectName = ((Get-ChildItem -Path $ProjectPath\*\*.psd1).Where{
+        ($_.Directory.Name -match 'source|src' -or $_.Directory.Name -eq $_.BaseName) -and
+        $(try { Test-ModuleManifest $_.FullName -ErrorAction Stop } catch { $false } )
+    }).BaseName
 
-    Remove-Module $Module -ErrorAction SilentlyContinue -Force
-    Remove-Item -Path Function:\$($FunctionName)
 
-    . "$PSScriptRoot\..\source\Public\$($FunctionName).ps1"
-}
+Import-Module $ProjectName
 
-Describe 'Testing <FunctionName> function' {
+InModuleScope $ProjectName {
+    Describe Get-KVCertificateWithPrivateKey {
+        Context 'Default' {
 
-    It 'Test to implement' {
-      $true | Should -BeTrue
+            It 'Unit tests to implement' {
+                $true | Should -BeTrue
+            }
+        }
     }
 }
