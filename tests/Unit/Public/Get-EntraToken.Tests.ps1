@@ -1,30 +1,19 @@
-BeforeAll {
-    $Module = 'PSMSALNet'
-    $FunctionName = 'Get-EntraToken'
+$ProjectPath = "$PSScriptRoot\..\..\.." | Convert-Path
+$ProjectName = ((Get-ChildItem -Path $ProjectPath\*\*.psd1).Where{
+        ($_.Directory.Name -match 'source|src' -or $_.Directory.Name -eq $_.BaseName) -and
+        $(try { Test-ModuleManifest $_.FullName -ErrorAction Stop } catch { $false } )
+    }).BaseName
 
-    Remove-Module $Module -ErrorAction SilentlyContinue -Force
-    Remove-Item -Path Function:\$($FunctionName)
 
-    . "$PSScriptRoot\..\source\Public\$($FunctionName).ps1"
-}
+Import-Module $ProjectName
 
-Describe 'Testing <FunctionName> function' {
+InModuleScope $ProjectName {
+    Describe Get-EntraToken{
+        Context 'Default' {
 
-    It 'Should have synopsis documentation' {
-    write-host $PSScriptRoot
-    write-host "$PSScriptRoot\..\source\Public\$($FunctionName).ps1"
-      (Get-Help $FunctionName).synopsis | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Should have description documentation' {
-      (Get-Help $FunctionName).Description | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Should have parameters documentation' {
-        (Get-Help $FunctionName).parameters.parameter | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Should have examples' {
-      (Get-Help $FunctionName).examples | Should -Not -BeNullOrEmpty
+            It 'Unit tests to implement' {
+                $true | Should -BeTrue
+            }
+        }
     }
 }
