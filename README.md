@@ -5,10 +5,9 @@ This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authenticatio
 
 # Introduction
 
-[!IMPORTANT]  
 Crucial information necessary for users to succeed.
 
-This is a Powershel 7.2 module minimum
+:warning: This is a **Powershel 7.2** module minimum
 
 
 I've started to think about this module the day Microsoft decided to layoff a lot of Identity people specially (MSAL.PS dude). Since, this module has not received any udpates (even before in fact) but in parallel, the MSAL.net team did a lot of new release since.
