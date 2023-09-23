@@ -1,46 +1,125 @@
 # PSMSALNet Module
 
-This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) functionality into PowerShell-friendly cmdlets. 
-
-
-# Introduction
-
-Crucial information necessary for users to succeed.
-
 :warning: This is a **Powershel 7.2** module minimum
 
+This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) functionality into PowerShell-friendly cmdlets. The goal is not to implement every flows MSAL can propose but the more useful and secured ones. Flow like ROPC or windows integrated flow won't be implemented for security reasons.
 
-I've started to think about this module the day Microsoft decided to layoff a lot of Identity people specially (MSAL.PS dude). Since, this module has not received any udpates (even before in fact) but in parallel, the MSAL.net team did a lot of new release since.
-This module is not a full implementation of MSAL.NET and won't be, but after several years of using the wonderfull MSAL.PS few limitations started to show up. I'e decided to expose only the flows that I'm interrested in and skip flows that I consider deprecated like ROPC, Windows Integrated flow and maybe few others. In addition, over the years, I've created several identity related scripts to be consumed in Azure or not.
-Since, MSAL.net expose wonderfull features like managed identities (even for ARC) and WAM (Web account management) which is strong auth compatible (compared to Windows Integrated flow).
+Why not using MSAL.PS module instead? MSAL.PS has not been updated since several months now and recently the module has been declared as an "archive" by Microsoft. On the other side, the MSAL.NET team did a wonderful job and has realeased a lot of neat features that won't be implemented in MSAL.PS.
+
+Over the years, I've created a lot of identity scripts you can find in this Github account to interact with managed identities, Azure ARC for server or federated credentials. Rencently I've decided to create this module (mainly for my needs) because all those flows are now included in MSAL.NET which will simplify a lot of things :smiley:.
+
+Thanks to MSAL.NET, I've discovered WAM (Web Account Manager) wich is a Windows feature compatible with modern authentication and more specificaly with MFA (compared to Windows Integrated flow)! The problem that I've discovered is that Powershell is not compatible with the library regarding WAM (at least I've stop after 20 hours of tries) this is why I've decided to try in C# directly. The funny thing is that I'm a newbie in C#.
+
+Talking about libraries, this module rely a lot on various MSAL libraries:
+- Microsoft.Identity.Client -> Core
+- Microsoft.IdentityModel.Abstractions -> Core dependency
+- Microsoft.Identity.Client.Broker > required for WAM
+- Microsoft.Identity.Client.NativeInterop > required for WAM
+- Microsoft.Identity.Client.Extensions.Msal > to serialize tokens on the local disks (in future version)
+
+In addition, I created two other libraries for device code and WAM:
+- [DeviceCodeHelper](https://github.com/SCOMnewbie/DeviceCodeHelper) -> Used for device code flow (no really?)
+- [WAMHelper](https://github.com/SCOMnewbie/WAMHelper)
+
+This module won't focus exclusively on the MSAL library but will add features around identity concepts in general to help us to better consume Entra features.
+
+This module will feat perfectly with the [ValidateAADJWt](https://www.powershellgallery.com/packages/ValidateAADJwt) (maybe I should change the module name lol) to validate all tokens you will generate with this module.
 
 ## What you can do with this module?
 
-- You can create access/Id/Refresh tokens in severals using several MSAL OAuth flows:
-    - list all flows
-- You can generate a X509 certification from mulitple format (cer, pfx,...). This is useful is you plan to rely on certificate on Linux (containers). With one cmdlet, you generate a 509 obect you can pass in the Get-Entratoken cmdlet.
-- This module should be compatible with Azure public but also Azure China and other govs environemnt
-- This module will help you to generate tokens for "basic" audiences like storage account, ARM, KeyVault and so on ... But also custom APIs through the custom parameter under audiences.
+### Generate Entra tokens with various flows (Get-EntraToken)
 
+- Client credential flow with both secret and certificate for machine to machine communiaction (application context).
+- Public Authorization Code with PKCE (human context).
+- Device Code flow for headless Operating system. It's preferable to use the authorization code with PKCE instead (human context).
+- Windows Account Manager flow (human context).
+- On behalf flow (OBO) with both secret and certificate for your backend api (human context).
+- System Managed identity from anywhere even Azure ARC for server (application context)!
+- User Managed identity (application context).
 
-## What you can't do with this module?
+To help you in this complex subject, this module will re-use ideas that I've implemented in other scripts. Several resources are pre-defined (Graph API, KeyVault, Storage, ARM...) to help you to find the proper resource. In addition, for user context only (application context is auto completed) you will have to define all the permissions you need. Check examples to better understand.
 
-Like today with MSAL.PS, you can't validate tokens and it's normal, this is not the purpose of the library. But if you have this need, you can use this module that I've done called XXX and use it with from your backend Powershell APIs like this example(scmnewbie links) 
+### Generate X509 certificate objects (ConvertTo-X509Certificate2, Get-KVCertificateWithPrivateKey, Get-KVCertificateWithPublicKey)
 
-## How this module is working?
+Using certificate in both Windows and Linux can become a pain quickly. This module will help you to exposed X509 certificate objects you will then consume with Get-EntraToken cmdlet. This function will propose several certifacte format/source:
 
-We're using a lot of both official and custom nuget packages. 
-For the official ones, we're using the:
-- Microsoft.Identity.Client -> Core
-- Abstraction -> Core depandancy
-- Broker > required for WAM
-- interrpopt > required for WAM
-- extension > to serialize tokens on the local disks
+- **Certificate Type**:
+  - Pfx
+  - Pem
+  - Crt
+  - Cer
+- **Source**:
+  - Local disk
+  - Azure Keyvault (JWT token required)
 
-For the customs:
-- Device code helper you can find here (link) -> Use to expose and catch the device code exposed my Microsoft. The code is a simple copy/paste from Microsoft documentation
-- WAMHelper you can find here -> Because WAM does not work straight from Powershell (never succeed to make it work after 20 hours), I've decided to create a new library (with synchronous calls) and expose it as a Powershell cmdlet. Then I use it internally as a private function.
+## What will come next?
+
+- Improve unit testing
+- Improve documentation
+- Implement local token serialization for public appilcations (flows that don't need secret/cert/assertion)
+
+## How to use it
+
+### Client credential flow
+
+#### With secret
+
+This command will generate a token and sotre it in memory (linked to the Pwsh process). MSAL will manage the expiration of the token and call Entra when it will be necessary.
+
+```Powershell
+$HashArguments = @{
+  ClientId = "47077650-52a9-4bc2-b689-b50002b764ee"
+  ClientSecret = $ClientSecret
+  TenantId = $TenantId
+  Resource = 'GraphAPI'
+}
+Get-EntraToken -ClientCredentialFlowWithSecret @HashArguments
+```
+
+If you want to force refresh, use instead:
+
+```Powershell
+$HashArguments = @{
+  ClientId = "47077650-52a9-4bc2-b689-b50002b764ee"
+  ClientSecret = $ClientSecret
+  TenantId = $TenantId
+  Resource = 'ARM'
+  WithoutCaching = $true
+}
+Get-EntraToken -ClientCredentialFlowWithSecret @HashArguments
+```
+
+In this case, MSAL will generate a new token to access the Azure Resource Manager resource everytime.
+
+#### With certificate
+
+From a windows, we can do:
+
+```Powershell
+#https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-self-signed-certificate
+$certname = "newcert"
+$cert = New-SelfSignedCertificate -Subject "CN=$certname" -CertStoreLocation "Cert:\CurrentUser\My" -KeyExportPolicy Exportable -KeySpec Signature -KeyLength 2048 -KeyAlgorithm RSA -HashAlgorithm SHA256
+$mypwd = ConvertTo-SecureString -String "{myPassword}" -Force -AsPlainText
+# This is what you keep
+Export-PfxCertificate -Cert $cert -FilePath "C:\TEMP\$certname.pfx" -Password $mypwd
+# This is what you will upload to Azure app registration
+Export-Certificate -Cert $cert -FilePath "C:\TEMP\$certname.cer"
+# Generate the X509 object
+$X509 = ConvertTo-X509Certificate2 -PfxPath C:\TEMP\newcert.pfx -Password $(ConvertTo-SecureString -String '{myPassword}' -AsPlainText -Force) -Verbose
+
+$HashArguments = @{
+  ClientId = "47048650-52a9-4bc2-b689-b50002a764ee"
+  ClientCertificate = $X509
+  TenantId = $TenantId
+  Resource = 'Keyvault'
+  verbose = $true
+}
+
+Get-EntraToken -ClientCredentialFlowWithCertificate @HashArguments
+```
+This will generate a token but this time with a certificate instead of a secret. This is a more secure solution, you know you won't see certificate information in proxy/firewall/logs.
+Always try to use certificate compared to secrets.
 
 ## How to contribute
 
-This module is based on Sampler module. To contribute, clone the repo and run a .\build ...
+This module is based on the Sampler module. To contribute, clone the repo and run a .\build.ps1 -Task build -ResolveDependency

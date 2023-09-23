@@ -52,7 +52,7 @@ BuildWorkflow:
     - Clean
     - Build_Module_ModuleBuilder
     - test
-    #- Create_changelog_release_output
+    - Create_changelog_release_output
     - Generate_MAML_from_built_module
 
   pack:

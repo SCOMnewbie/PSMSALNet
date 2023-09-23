@@ -7,42 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Thing added in V 0.0.3
+- Add new client credential flow example in the Get-Entra cmdlet
+- Add new client credential flow example in the README
 
-### Changed
+### Fixed
 
-- Thing changed in V 0.0.3
+- Get-EntraToken -ClientCredentialFlowWithSecret output a non necessary line in the output. Remove it.
 
-### Removed
-
-- Thing removed in V 0.0.3
-
-
-## [0.0.2] - 2023-08-17
+## [0.0.1] - 2023-09-23
 
 ### Added
 
-- Thing added in V 0.0.2
+- This is the initial version
 
 ### Changed
 
-- Thing changed in V 0.0.2
+- N/A
 
 ### Removed
 
-- Thing removed in V 0.0.2
-
-## [0.0.1] - 2023-08-16
-
-### Added
-
-- Thing added in V 0.0.1
-- blah
-
-### Changed
-
-- Thing changed in V 0.0.1
-
-### Removed
-
-- Thing removed in V 0.0.1
+- N/A

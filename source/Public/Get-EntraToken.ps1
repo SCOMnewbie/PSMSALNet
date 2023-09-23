@@ -50,16 +50,20 @@
     The ExtraScopesToConsent parameter defines the extra scopes you need following the Entra limitation where you can call only one resource per call. Thi parameter is useful when you need Graph API and ARM token.
     .EXAMPLE
 
-    Sync-AADGroupFromAD -DisplayName "Test_FL_graph-owner" -MailNickname "123456789012" -OnPremGroupToCopyFrom "myADgroup" -Verbose
+    $HashArguments = @{
+        ClientId = "47077650-53a9-4bc2-b689-b50002b764ee"
+        ClientSecret = $ClientSecret
+        TenantId = $TenantId
+        Resource = 'GraphAPI'
+    }
+    Get-EntraToken -ClientCredentialFlowWithSecret @HashArguments
 
-    Will mirror the onprem group to an AAD group. In other words, this command can Add/Remove members to an AAD group.
+    This command will generate a token to access Graph API scope with all application permissions assign to this app registration. the token is stored in memory cache managed by MSAL.
 
     .NOTES
     VERSION HISTORY
-    1.0 | 2020/12/02 | Francois LEON
+    2023/09/23 | Francois LEON
         initial version
-    POSSIBLE IMPROVEMENT
-        -
     #>
     [cmdletbinding()]
     [OutputType([Microsoft.Identity.Client.AuthenticationResult])]
@@ -232,10 +236,10 @@
         $ClientApplicationBuilder.WithAuthority($AzureCloudInstance,$TenantId) | Out-Null
         if($WithoutCaching){
             Write-Verbose "[$((Get-Date).TimeofDay)] Caching disabled with client credential flow"
-            $ClientApplicationBuilder.WithCacheOptions($false)
+            $ClientApplicationBuilder.WithCacheOptions($false) | Out-Null
         }
         else{
-            $ClientApplicationBuilder.WithCacheOptions($true)
+            $ClientApplicationBuilder.WithCacheOptions($true) | Out-Null
         }
         switch -regex ($PSBoundParameters.Keys) {
             'ClientCredentialFlowWithSecret|OnBehalfFlowWithSecret' {
@@ -420,6 +424,7 @@
         Write-Error -Exception ($_.Exception) -Category ([System.Management.Automation.ErrorCategory]::AuthenticationError) -CategoryActivity $MyInvocation.MyCommand -ErrorId 'GetMsalTokenFailureAuthenticationError' -TargetObject $AquireTokenParameters -ErrorAction Stop
     }
 
+    Write-Verbose "[$((Get-Date).TimeofDay)] Ending $($myinvocation.mycommand)"
     # Return access token + Id token
     $AuthenticationResult
 }
