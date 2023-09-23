@@ -3,9 +3,13 @@
 This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) functionality into PowerShell-friendly cmdlets. 
 
 
-# Intro
+# Introduction
+
+[!IMPORTANT]  
+Crucial information necessary for users to succeed.
 
 This is a Powershel 7.2 module minimum
+
 
 I've started to think about this module the day Microsoft decided to layoff a lot of Identity people specially (MSAL.PS dude). Since, this module has not received any udpates (even before in fact) but in parallel, the MSAL.net team did a lot of new release since.
 This module is not a full implementation of MSAL.NET and won't be, but after several years of using the wonderfull MSAL.PS few limitations started to show up. I'e decided to expose only the flows that I'm interrested in and skip flows that I consider deprecated like ROPC, Windows Integrated flow and maybe few others. In addition, over the years, I've created several identity related scripts to be consumed in Azure or not.
