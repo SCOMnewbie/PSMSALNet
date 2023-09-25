@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## [0.0.3] - 2023-09-25
+
+### Fixed
+
+- The private cmdlet exposed by the WAMHelper.dll which is required for the -WAMflow parameter wasn't loaded into the module through the RequiredAssemblies into the psd1 file. The module is now manually added to the psm1 file with the prefix.ps1 script and the build.yml parameter file.
+
 ## [0.0.2] - 2023-09-25
 
 ### Added

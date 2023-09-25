@@ -169,6 +169,10 @@ Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource
 
 This command will use the default redirect uri which is 'http://localhost'.
 
+### Web Account Manager (WAM)
+
+Imagine now 
+
 ## How to contribute
 
 This module is based on Sampler module. To contribute, clone the repo and run a .\build.ps1 -Task build -ResolveDependency
