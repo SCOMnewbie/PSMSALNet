@@ -120,6 +120,43 @@ Get-EntraToken -ClientCredentialFlowWithCertificate @HashArguments
 This will generate a token but this time with a certificate instead of a secret. This is a more secure solution, you know you won't see certificate information in proxy/firewall/logs.
 Always try to use certificate compared to secrets.
 
+### Authorization code with PKCE
+
+Imagine you want to access a resource protected by Entra and only selected person can access the resource. Because this is a public flow (in this case), no secret will be required because the user context itself is the "secret".
+
+```Powershell
+
+$HashArguments = @{
+  ClientId = "4adbb0ff-3cde-4fc1-b22e-94ee7d16d70b"
+  TenantId = $TenantId
+  RedirectUri = 'http://localhost'
+  Resource = 'GraphAPI'
+  Permissions = @('user.read','group.read.all')
+  ExtraScopesToConsent = @('https://management.azure.com/user_impersonation')
+  verbose = $true
+}
+
+Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
+```
+
+Thanks to the ExtraScopesToConsent parameter, if you now type:
+
+```Powershell
+
+$HashArguments = @{
+  ClientId = "4adbb0ff-3cde-4fc1-b22e-94ee7d16d70b"
+  TenantId = $TenantId
+  RedirectUri = 'http://localhost'
+  Resource = 'ARM'
+  Permissions = @('user_impersonation')
+  verbose = $true
+}
+
+Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
+```
+
+You will hit the MSAL cache and won't have another windows for sign-in. To summarize, the first cmdlet requests a token to access Graph API with specific permissions and requests in parallel a token to access the Azure Resource Manager resource to avoid a second popup.
+
 ## How to contribute
 
-This module is based on the Sampler module. To contribute, clone the repo and run a .\build.ps1 -Task build -ResolveDependency
+This module is based on Sampler module. To contribute, clone the repo and run a .\build.ps1 -Task build -ResolveDependency

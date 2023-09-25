@@ -51,15 +51,29 @@
     .EXAMPLE
 
     $HashArguments = @{
-        ClientId = "47077650-53a9-4bc2-b689-b50002b764ee"
+        ClientId = $clientId
         ClientSecret = $ClientSecret
         TenantId = $TenantId
         Resource = 'GraphAPI'
     }
     Get-EntraToken -ClientCredentialFlowWithSecret @HashArguments
 
-    This command will generate a token to access Graph API scope with all application permissions assign to this app registration. the token is stored in memory cache managed by MSAL.
+    This command will generate a token to access Graph API scope with all application permissions assign to this app registration. The token is stored in memory cache managed by MSAL.
+    .EXAMPLE
 
+    $HashArguments = @{
+        ClientId = $clientId
+        TenantId = $TenantId
+        RedirectUri = 'http://localhost'
+        Resource = 'GraphAPI'
+        Permissions = @('user.read','group.read.all')
+        ExtraScopesToConsent = @('https://management.azure.com/user_impersonation')
+        verbose = $true
+    }
+
+    Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
+
+    This command will generate a token to access Graph API scope with all application permissions added in the request. In addition, the request will do a second call to Entra to generate a token to access the ARM resource. The token is stored in memory cache managed by MSAL.
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON
@@ -373,7 +387,7 @@
                 Write-Verbose "[$((Get-Date).TimeofDay)] Acquire token interactively"
                 $AquireTokenParameters = $ClientApplication.AcquireTokenInteractive($Scopes)
                 if($extraScopesToConsent){
-                    $AquireTokenParameters.WithExtraScopesToConsent($extraScopesToConsent)
+                    $AquireTokenParameters.WithExtraScopesToConsent($extraScopesToConsent) | Out-Null
                 }
             }
 
