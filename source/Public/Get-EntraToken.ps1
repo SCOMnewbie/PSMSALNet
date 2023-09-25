@@ -79,6 +79,11 @@
     Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource GraphAPI -Permissions @('user.read')
 
     This command will generate a token to access Graph API (user.read) scope with the default redirect uri value which is 'http://localhost'
+    .EXAMPLE
+
+    Get-EntraToken -WAMFlow -ClientId $clientId -TenantId $tenantId -RedirectUri 'ms-appx-web://Microsoft.AAD.BrokerPlugin/9f0...8f01' -Resource Custom -CustomResource api://AADToken-WebAPI-back-OBO -Permissions access_asuser
+
+    This command (Windows only) use the Web Account MAnager component to communicate with Entra. In this case we request a token to access a custom API protected by entra. The redirect uri is not configured to use localhost as usual.
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON

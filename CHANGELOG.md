@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- N/A
+- Add new WAM flow example in the Get-Entra cmdlet
+- Add new WAM flow example in the README
 
 ### Fixed
 

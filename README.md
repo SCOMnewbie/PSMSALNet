@@ -171,7 +171,27 @@ This command will use the default redirect uri which is 'http://localhost'.
 
 ### Web Account Manager (WAM)
 
-Imagine now 
+WAM flow connects you device you're using with an Entra tenant. Here for exemple, I'm asking a new token to access a custom API protected by Entra:
+
+```Powershell
+Get-EntraToken -WAMFlow -ClientId $clientId -TenantId $tenantId -RedirectUri 'ms-appx-web://Microsoft.AAD.BrokerPlugin/9f0...8f01' -Resource Custom -CustomResource api://AADToken-WebAPI-back-OBO -Permissions access_asuser
+```
+
+Once you execute the command, you should see:
+
+![Diagram](./images/wam01.jpg)
+
+Once you hit OK, the device enrollment should start:
+
+![Diagram](./images/wam02.jpg)
+
+And after few seconds, you should see:
+
+![Diagram](./images/wam03.jpg)
+
+Now if you go on your tenant, you should see a new device linked to your account and in parallel, you should receive your access/id tokens.
+
+If you re-execute the command, you will hit the MSAL cache.
 
 ## How to contribute
 
