@@ -1,6 +1,6 @@
 # PSMSALNet Module
 
-:warning: This is a **Powershel 7.2** module minimum
+:warning: This is a **Powershel 7.2** module minimum but should work on Linux/MAC/Windows.
 
 This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) functionality into PowerShell-friendly cmdlets. The goal is not to implement every flows MSAL can propose but the more useful and secured ones. Flow like ROPC or windows integrated flow won't be implemented for security reasons.
 
@@ -29,7 +29,7 @@ This module will feat perfectly with the [ValidateAADJWt](https://www.powershell
 
 ### Generate Entra tokens with various flows (Get-EntraToken)
 
-- Client credential flow with both secret and certificate for machine to machine communiaction (application context).
+- Client credential flow with both secret and certificate for machine to machine communication (application context).
 - Public Authorization Code with PKCE (human context).
 - Device Code flow for headless Operating system. It's preferable to use the authorization code with PKCE instead (human context).
 - Windows Account Manager flow (human context).
@@ -156,6 +156,18 @@ Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
 ```
 
 You will hit the MSAL cache and won't have another windows for sign-in. To summarize, the first cmdlet requests a token to access Graph API with specific permissions and requests in parallel a token to access the Azure Resource Manager resource to avoid a second popup.
+
+### Device code
+
+Imagine now you're on WSL/Linux (headless Operating System) but you want to access a protected resource. This is where device code can be interesting.
+
+:warning: This flow can be considered as less secure than the other flows. Don't forget to enabled the device code flow in your app registration and this flow won't be compatible with device compliant state.
+
+```Powershell
+Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource GraphAPI -Permissions @('user.read')
+```
+
+This command will use the default redirect uri which is 'http://localhost'.
 
 ## How to contribute
 

@@ -74,6 +74,11 @@
     Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
 
     This command will generate a token to access Graph API scope with all application permissions added in the request. In addition, the request will do a second call to Entra to generate a token to access the ARM resource. The token is stored in memory cache managed by MSAL.
+    .EXAMPLE
+
+    Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource GraphAPI -Permissions @('user.read')
+
+    This command will generate a token to access Graph API (user.read) scope with the default redirect uri value which is 'http://localhost'
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON

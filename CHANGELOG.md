@@ -7,15 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- N/A
+
+### Fixed
+
+- N/A
+
+## [0.0.2] - 2023-09-25
+
+### Added
+
 - Add new client credential flow example in the Get-Entra cmdlet
 - Add new client credential flow example in the README
 - Add new authorization code flow example in the Get-Entra cmdlet
 - Add new authorization code flow example in the README
+- Add new device code flow example in the Get-Entra cmdlet
+- Add new device code flow example in the README
 
-### Fixed
+### Changed
 
 - Get-EntraToken -ClientCredentialFlowWithSecret output a non necessary line in the output. Remove it.
 - Get-EntraToken -PublicAuthorizationCodeFlow output a non necessary line in the output. Remove it.
+- Added new WAMHelper version without dotnet framwork requirement.
+
+### Removed
+
+- N/A
 
 ## [0.0.1] - 2023-09-23
 
