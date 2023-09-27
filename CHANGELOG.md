@@ -7,12 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add new WAM flow example in the Get-Entra cmdlet
-- Add new WAM flow example in the README
+-N/A
 
 ### Fixed
 
 - N/A
+## [0.0.4] - 2023-09-27
+
+### Added
+
+- Add new WAM flow example in the Get-Entra cmdlet
+- Add new WAM flow example in the README
+- Add new OBO flow examples (secret + certificate) in README
+- Add new OBO flow example in the Get-Entra cmdlet
+- Add a lot of system managed identity examples
+- Project URL in powershell gallery
 
 ## [0.0.3] - 2023-09-25
 

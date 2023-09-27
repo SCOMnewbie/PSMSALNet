@@ -173,6 +173,8 @@ This command will use the default redirect uri which is 'http://localhost'.
 
 WAM flow connects you device you're using with an Entra tenant. Here for exemple, I'm asking a new token to access a custom API protected by Entra:
 
+:notes: WAM seems to be the more secure way because this flow is compatible with the [token protection](https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-token-protection) conditional access. In addition, if your machine is already Azure joined, you won't even have to enroll it and you will be able to generate tokens straight away.
+
 ```Powershell
 Get-EntraToken -WAMFlow -ClientId $clientId -TenantId $tenantId -RedirectUri 'ms-appx-web://Microsoft.AAD.BrokerPlugin/9f0...8f01' -Resource Custom -CustomResource api://AADToken-WebAPI-back-OBO -Permissions access_asuser
 ```
@@ -192,6 +194,115 @@ And after few seconds, you should see:
 Now if you go on your tenant, you should see a new device linked to your account and in parallel, you should receive your access/id tokens.
 
 If you re-execute the command, you will hit the MSAL cache.
+
+### On Behalf flow (OBO)
+
+This flow is used when from a backend API (or a web site) you want to re-use the user context to access another API. Here the Microsoft diagram regarding this flow:
+
+![Diagram](./images/obo.png)
+
+To make it works, you first have to generate a token to access a custom protected exposed API and then, from this backend API, you will be able to call another API but with the user context. Let's generate a token from a client using one of the previous public flows (authorization code, device code, WAM).
+
+```Powershell
+$HashArguments = @{
+  ClientId = "0a74a6ca-489b-4e81-acdb-bd91db65b239" #Frontend client
+  TenantId = $TenantId
+  Resource = 'Custom'
+  CustomResource = 'api://5449c592-36c4-47ca-8b02-d9813f4bf2d1'
+  Permissions = 'access_as_user'
+  verbose = $true
+}
+
+$FrontEndClientToken = Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
+```
+
+#### With secret
+
+Let's now imagine we're on the backed API this time and we will receive the access token previously generated. The backend API has Graph API permission to read user information. As you can see the previous custom resource become the client this time:
+
+:notes: Don't forget to admin consent the backend api permission even for non admin permissions.
+
+```Powershell
+
+Get-EntraToken -OnBehalfFlowWithSecret -ClientId $BackendClientId -ClientSecret '20n...B' -TenantId $tenantId -Resource GraphAPI -Permissions 'User.read' -UserAssertion $FrontEndClientToken.accesstoken | % AccessToken
+```
+
+If you now copy this new token in JWT.ms, you will see this is a Graph API token under the user context:
+
+![Diagram](./images/obo01.jpg)
+
+:warning: This is where the module [ValidateAADJWt](https://www.powershellgallery.com/packages/ValidateAADJwt) starts to shine. Your backend API must validate the token you receive.
+
+You can find more information on this flow [here](https://learn.microsoft.com/fr-fr/azure/active-directory/develop/v2-oauth2-on-behalf-of-flow).
+
+#### With certificate
+
+If we re-use the previous generated certificate:
+
+```Powershell
+$X509 = ConvertTo-X509Certificate2 -PfxPath C:\TEMP\newcert.pfx -Password $(ConvertTo-SecureString -String '{myPassword}' -AsPlainText -Force) -Verbose
+Get-EntraToken -OnBehalfFlowWithCertificate -ClientCertificate $X509 -UserAssertion $FrontEndClientToken.accesstoken -ClientId $BackendClientId -TenantId $tenantId -Resource GraphAPI -Permissions 'User.read' | % AccessToken
+```
+
+Like with the secret flow, you will receive the same token.
+
+### System Managed Identity
+
+#### From a Windows Azure VM (tested)
+
+On a fresh new Azure VM, install Powershell 7 and then type:
+
+```Powershell
+install-module PSMSALNet
+Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
+```
+
+#### From a Linux Azure VM (tested)
+
+Once Powershell 7 installed, run:
+
+```Powershell
+install-module PSMSALNet
+Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
+```
+
+#### From a Windows Azure function (tested)
+
+Once the PSMSALNet module added to your requirements.psd1, run:
+
+```Powershell
+Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
+```
+
+#### From a Linux Azure function (tested)
+
+Once the PSMSALNet module added to your requirements.psd1, run:
+
+```Powershell
+Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
+```
+
+#### From Azure Container Instance (tested)
+
+Once the container built with the Dockerfile (check the deploy.ps1 script) in the examples folder, deploy a new ACI and enable the system MSI. And again, same command to get your access token.
+
+![Diagram](./images/aci.jpg)
+
+#### From Windows ARC for server (tested)
+
+Once you've installed Powershell7, PSMSALNet module and installed (enrolled) the ARC agent, you run the same cmdlet again and you should receive a new token
+
+```Powershell
+Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
+```
+
+#### From Linux ARC for server (tested)
+
+:warning: Does not work for now, for now use this [script](https://github.com/SCOMnewbie/Azure/blob/master/Identity-AAD/Get-AccessTokenWithAzIdentity.ps1) instead.
+
+Error received:
+
+![Diagram](./images/linuxarcerror.jpg)
 
 ## How to contribute
 

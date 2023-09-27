@@ -84,6 +84,12 @@
     Get-EntraToken -WAMFlow -ClientId $clientId -TenantId $tenantId -RedirectUri 'ms-appx-web://Microsoft.AAD.BrokerPlugin/9f0...8f01' -Resource Custom -CustomResource api://AADToken-WebAPI-back-OBO -Permissions access_asuser
 
     This command (Windows only) use the Web Account MAnager component to communicate with Entra. In this case we request a token to access a custom API protected by entra. The redirect uri is not configured to use localhost as usual.
+    .EXAMPLE
+
+    $X509 = ConvertTo-X509Certificate2 -PfxPath C:\TEMP\newcert.pfx -Password $(ConvertTo-SecureString -String '{myPassword}' -AsPlainText -Force) -Verbose
+    Get-EntraToken -OnBehalfFlowWithCertificate -ClientCertificate $X509 -UserAssertion $FrontEndClientToken.accesstoken -ClientId $BackendClientId -TenantId $tenantId -Resource GraphAPI -Permissions 'User.read' | % AccessToken
+
+    This command, executed from a backend api will generate a tokens using the OBO flow with certificate.
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON

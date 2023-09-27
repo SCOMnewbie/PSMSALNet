@@ -12,7 +12,7 @@
 RootModule = 'PSMSALNet.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -81,7 +81,7 @@ VariablesToExport = @()
 AliasesToExport = @()
 
 # DSC resources to export from this module
-DscResourcesToExport = @()
+#DscResourcesToExport = @()
 
 # List of all modules packaged with this module
 # ModuleList = @()
@@ -101,7 +101,7 @@ PrivateData = @{
         # LicenseUri = ''
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/SCOMnewbie/PSMSALNet'
 
         # A URL to an icon representing this module.
         # IconUri = ''
