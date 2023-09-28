@@ -36,6 +36,7 @@ This module will feat perfectly with the [ValidateAADJWt](https://www.powershell
 - On behalf flow (OBO) with both secret and certificate for your backend api (human context).
 - System Managed identity from anywhere even Azure ARC for server (application context)!
 - User Managed identity (application context).
+- Federated credential
 
 To help you in this complex subject, this module will re-use ideas that I've implemented in other scripts. Several resources are pre-defined (Graph API, KeyVault, Storage, ARM...) to help you to find the proper resource. In addition, for user context only (application context is auto completed) you will have to define all the permissions you need. Check examples to better understand.
 
@@ -303,6 +304,8 @@ Get-EntraToken -SystemManagedIdentity -Resource GraphAPI
 Error received:
 
 ![Diagram](./images/linuxarcerror.jpg)
+
+Bug declared in [MSAL.net github repository](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/4358).
 
 ## How to contribute
 
