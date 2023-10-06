@@ -48,6 +48,8 @@
     The Permissions parameter defines the permissions you request. This is usually what is after api://<...>/<Permission> or with Graph API @("User.Read","Group.Read"). the combinaison of Resource and permission create the scope.
     .PARAMETER ExtraScopesToConsent
     The ExtraScopesToConsent parameter defines the extra scopes you need following the Entra limitation where you can call only one resource per call. Thi parameter is useful when you need Graph API and ARM token.
+    .PARAMETER WithDebugLogging
+    The WithDebugLogging enable the MSAL library logging.
     .EXAMPLE
 
     $HashArguments = @{
@@ -204,7 +206,9 @@
         [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
         [Parameter(ParameterSetName = 'WAMFlow')]
         [Parameter(ParameterSetName = 'DeviceCodeFlow')]
-        [string[]]$ExtraScopesToConsent
+        [string[]]$ExtraScopesToConsent,
+
+        [switch]$WithDebugLogging
     )
 
     Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
@@ -271,6 +275,7 @@
         else{
             $ClientApplicationBuilder.WithCacheOptions($true) | Out-Null
         }
+
         switch -regex ($PSBoundParameters.Keys) {
             'ClientCredentialFlowWithSecret|OnBehalfFlowWithSecret' {
                 $ClientApplicationBuilder.WithClientSecret($ClientSecret) | Out-Null
@@ -337,28 +342,16 @@
 
             return $WAMToken
             #https://devblogs.microsoft.com/identity/improved-windows-broker-support-with-msal-net/
-            #$ClientApplicationBuilder.WithDefaultRedirectUri()
-            #$ClientApplicationBuilder.WithParentActivityOrWindow($([Win32.Interop]::GetConsoleOrTerminalWindow()))
-            #$ClientApplicationBuilder.WithBroker([Microsoft.Identity.Client.BrokerOptions]::new('Windows'))
-            #[Microsoft.Identity.Client.Desktop.WamExtension]::WithWindowsBroker($ClientApplicationBuilder, $AuthenticationBroker)
-            #[IntPtr] $ParentWindow = [System.Diagnostics.Process]::GetCurrentProcess().MainWindowHandle
-            #if ($ParentWindow -eq [System.IntPtr]::Zero -and [System.Environment]::OSVersion.Platform -eq 'Win32NT') {
-            #$Win32Process = Get-CimInstance Win32_Process -Filter ("ProcessId = '{0}'" -f [System.Diagnostics.Process]::GetCurrentProcess().Id) -Verbose:$false
-            #    $ParentWindow = (Get-Process -Id $Win32Process.ParentProcessId).MainWindowHandle
-            #}
-            #if ($ParentWindow -ne [System.IntPtr]::Zero) { [void] $ClientApplicationBuilder.WithParentActivityOrWindow($ParentWindow) }
-            #$Handle = [Win32.Interop]::GetConsoleOrTerminalWindow
-            #$ClientApplicationBuilder.WithParentActivityOrWindow()
-            #$brokerOption = [Microsoft.Identity.Client.BrokerOptions]::new('Windows')
-            #$brokerOption.ListOperatingSystemAccounts = $true
-            #$ClientApplicationBuilder.WithBroker($brokerOption)
-           #[Microsoft.Identity.Client.Broker.BrokerExtension]::WithBroker($ClientApplicationBuilder,$brokerOption)
-
-            #throw "Not implemented for now"
         }
         else{
             $ClientApplicationBuilder.WithRedirectUri($RedirectUri) | Out-Null
         }
+    }
+
+    if($WithDebugLogging){
+        Write-Verbose "[$((Get-Date).TimeofDay)] Debug logging selected"
+        #https://learn.microsoft.com/en-us/entra/msal/dotnet/advanced/exceptions/msal-logging#logging-levels
+        $ClientApplicationBuilder.WithLogging([PSMSALNetHelper.Mylogger]::new(), 'piilogging')  | Out-Null
     }
 
     $ClientApplication = $ClientApplicationBuilder.Build()

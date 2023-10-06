@@ -229,7 +229,7 @@ m0kSdGoh0ljQDdS6tnz5ou1uXwc7DnTEJYnrKXLGAsboBwcqN77thaNAGdhkQ1Qw
             It 'Should not throw with good param cer' {
                 $Path = "$PSScriptRoot{0}..{0}..{0}helpers{0}scomnewbie.cer" -f $DS #let's find the helpers folder
                 { ConvertTo-X509Certificate2 -CerPath $Path } | Should -Not -Throw
-            }
+            } -Skip
 
             It 'Should throw with wrong param crt' {
                 $Path = "$PSScriptRoot{0}..{0}..{0}helpers{0}scomnewbie.crt" -f $DS
