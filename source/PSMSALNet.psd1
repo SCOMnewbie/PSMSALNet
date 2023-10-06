@@ -12,7 +12,7 @@
 RootModule = 'PSMSALNet.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -54,7 +54,7 @@ PowerShellVersion = '7.2'
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @('./lib/Microsoft.Identity.Client.dll', './lib/Microsoft.IdentityModel.Abstractions.dll', './lib/Microsoft.Identity.Client.Broker.dll', './lib/Microsoft.Identity.Client.Extensions.Msal.dll', './lib/DeviceCodeHelper.dll', './lib/Microsoft.Identity.Client.NativeInterop.dll')
+RequiredAssemblies = @('./lib/Microsoft.Identity.Client.dll', './lib/Microsoft.IdentityModel.Abstractions.dll', './lib/Microsoft.Identity.Client.Broker.dll', './lib/Microsoft.Identity.Client.Extensions.Msal.dll', './lib/DeviceCodeHelper.dll', './lib/Microsoft.Identity.Client.NativeInterop.dll','./lib/PSMSALNetHelper.dll')
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()

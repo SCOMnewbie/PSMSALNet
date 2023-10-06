@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - N/A
+## [0.0.5] - 2023-10-06
+
+### Added
+
+- Add MSAL logging with the WithDebugLogging parameter
+- Add PSMSALNetHelper.dll library
+
 ## [0.0.4] - 2023-09-27
 
 ### Added
