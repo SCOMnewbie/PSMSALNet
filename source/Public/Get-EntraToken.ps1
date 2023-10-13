@@ -92,6 +92,12 @@
     Get-EntraToken -OnBehalfFlowWithCertificate -ClientCertificate $X509 -UserAssertion $FrontEndClientToken.accesstoken -ClientId $BackendClientId -TenantId $tenantId -Resource GraphAPI -Permissions 'User.read' | % AccessToken
 
     This command, executed from a backend api will generate a tokens using the OBO flow with certificate.
+    .EXAMPLE
+
+    $KubeSaToken = Get-Content -Path '/var/run/secrets/azure/tokens/azure-identity-token'
+    Get-EntraToken -FederatedCredentialFlowWithAssertion -UserAssertion $KubeSaToken -ClientId $([Environment]::GetEnvironmentVariable('AZURE_CLIENT_ID')) -TenantId $([Environment]::GetEnvironmentVariable('AZURE_TENANT_ID')) -Resource GraphAPI
+
+    This command will generate a token to access Graph API (/.default) scope from a Kubernetes pod.
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON
@@ -287,7 +293,7 @@
             }
             'FederatedCredentialFlowWithAssertion'{
                 #https://learn.microsoft.com/en-us/entra/msal/dotnet/acquiring-tokens/web-apps-apis/confidential-client-assertions
-                $ClientApplicationBuilder.WithClientAssertion([Microsoft.Identity.Client.UserAssertion]::new($UserAssertion)) | Out-Null
+                $ClientApplicationBuilder.WithClientAssertion($UserAssertion) | Out-Null
                 break
             }
             default {

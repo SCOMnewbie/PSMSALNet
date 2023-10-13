@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - N/A
+## [0.0.6] - 2023-10-13
+
+### Fixed
+
+- FederatedCredentialFlowWithAssertion was broken with message 'AADSTS50027: JWT token is invalid or malformed', MSAL is waiting for a string directly instead of a userassignment object.
+
+### Added
+
+- Documentation about FederatedCredentialFlowWithAssertion parameter and a real Kubernetes example under Examples\aks-workloadidentity
+- README is updated for FederatedCredentialFlowWithAssertion parameter
+- Add new FederatedCredentialFlowWithAssertion flow example in the Get-Entra cmdlet
+
 ## [0.0.5] - 2023-10-06
 
 ### Added

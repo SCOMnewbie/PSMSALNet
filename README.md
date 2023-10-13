@@ -307,6 +307,29 @@ Error received:
 
 Bug declared in [MSAL.net github repository](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/4358).
 
+### Federated credentials
+
+#### From a managed or non managed **Kubernetes cluster**
+
+You can find the documentation under the Examples\aks-workloadidentity folder.
+
+The highlights are:
+
+- Create the app registration that will represent your pod(s)
+- Create the Kube cluster like AKS
+- Install the workload identity part with Helm
+- Create and ACR and make it build you container, then connect your Kube cluster to your ACR
+- Deploy your Pod, check the pod logs and you should see your container can now request for it's own tokens.
+
+App registration configuration:
+
+![Diagram](./images/federatedcreds.jpg.jpg)
+
+```Powershell
+$KubeSaToken = Get-Content -Path '/var/run/secrets/azure/tokens/azure-identity-token'
+Get-EntraToken -FederatedCredentialFlowWithAssertion -UserAssertion $KubeSaToken -ClientId $([Environment]::GetEnvironmentVariable('AZURE_CLIENT_ID')) -TenantId $([Environment]::GetEnvironmentVariable('AZURE_TENANT_ID')) -Resource GraphAPI
+```
+
 ## How to contribute
 
 This module is based on Sampler module. To contribute, clone the repo and run a .\build.ps1 -Task build -ResolveDependency
