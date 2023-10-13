@@ -323,7 +323,7 @@ The highlights are:
 
 App registration configuration:
 
-![Diagram](./images/federatedcreds.jpg.jpg)
+![Diagram](./images/federatedcreds.jpg)
 
 ```Powershell
 $KubeSaToken = Get-Content -Path '/var/run/secrets/azure/tokens/azure-identity-token'
