@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - N/A
+
+- ## [0.0.7] - 2023-10-16
+
+### Fixed
+
+- Following Azure [ARC for Linux issue confirmed by the MSAL.Net team](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/4358), a temporary fix is provided until the day MSAL.Net will include this feature. This flow, only generate an access token and doesn't use the MSAL memory cache.
+ 
 ## [0.0.6] - 2023-10-13
 
 ### Fixed

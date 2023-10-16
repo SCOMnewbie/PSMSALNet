@@ -1,4 +1,5 @@
-﻿function Get-EntraToken {
+﻿function Get-EntraToken
+{
     <#
     .SYNOPSIS
     This function will interact with MSAL.
@@ -175,7 +176,7 @@
         [switch] $WithoutCaching,
 
         # Instance of Azure Cloud
-        [ValidateSet('AzurePublic','AzureChina','AzureUsGovernment','AzureGermany')]
+        [ValidateSet('AzurePublic', 'AzureChina', 'AzureUsGovernment', 'AzureGermany')]
         [Microsoft.Identity.Client.AzureCloudInstance] $AzureCloudInstance = 'AzurePublic',
 
         # Tenant identifier of the authority to issue token. It can also contain the value "consumers" or "organizations".
@@ -197,7 +198,7 @@
 
         #Scope = Resource + Permission
         [parameter(Mandatory)]
-        [ValidateSet('Keyvault','ARM','GraphAPI','Storage','Monitor', 'LogAnalytics', 'PostGreSql','Custom')] #TODO: valider Graph API not sure it's working
+        [ValidateSet('Keyvault', 'ARM', 'GraphAPI', 'Storage', 'Monitor', 'LogAnalytics', 'PostGreSql', 'Custom')] #TODO: valider Graph API not sure it's working
         [string] $Resource,
 
         [string] $CustomResource = $null, #https:// ... should be used only with Custom Audience like api://<your api>
@@ -219,41 +220,75 @@
 
     Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
 
-    if ($Resource -eq 'Custom') {
-        if ($null -eq $CustomResource) {
+    if ($Resource -eq 'Custom')
+    {
+        if ($null -eq $CustomResource)
+        {
             Throw "CustomScope parameter should not be null when you're using Custom audience"
         }
     }
 
-    switch ($Resource) {
-        'Keyvault' { $ScopesUri = 'https://vault.azure.net';break }
-        'ARM' { $ScopesUri = 'https://management.azure.com';break }
-        'GraphAPI' { $ScopesUri = 'https://graph.microsoft.com';break }
-        'Storage' { $ScopesUri = 'https://storage.azure.com';break }
-        'Monitor' { $ScopesUri = 'https://monitor.azure.com';break }
-        'LogAnalytics' { $ScopesUri = 'https://api.loganalytics.io';break }
-        'PostGreSql' { $ScopesUri = 'https://ossrdbms-aad.database.windows.net';break }
-        default { $ScopesUri = $CustomResource }
+    switch ($Resource)
+    {
+        'Keyvault'
+        {
+            $ScopesUri = 'https://vault.azure.net'; break
+        }
+        'ARM'
+        {
+            $ScopesUri = 'https://management.azure.com'; break
+        }
+        'GraphAPI'
+        {
+            $ScopesUri = 'https://graph.microsoft.com'; break
+        }
+        'Storage'
+        {
+            $ScopesUri = 'https://storage.azure.com'; break
+        }
+        'Monitor'
+        {
+            $ScopesUri = 'https://monitor.azure.com'; break
+        }
+        'LogAnalytics'
+        {
+            $ScopesUri = 'https://api.loganalytics.io'; break
+        }
+        'PostGreSql'
+        {
+            $ScopesUri = 'https://ossrdbms-aad.database.windows.net'; break
+        }
+        default
+        {
+            $ScopesUri = $CustomResource
+        }
     }
 
-    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret','ClientCredentialFlowWithCertificate','SystemManagedIdentity','UserManagedIdentity','FederatedCredentialFlowWithAssertion')]) {
+    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'SystemManagedIdentity', 'UserManagedIdentity', 'FederatedCredentialFlowWithAssertion')])
+    {
         # In case a user provide api://fsdfsdf/ with a / at the end
-        if($CustomResource -match '\\$'){
-            [string[]]$scopes = '{0}{1}' -f $ScopesUri,'.default'
+        if ($CustomResource -match '\\$')
+        {
+            [string[]]$scopes = '{0}{1}' -f $ScopesUri, '.default'
         }
-        else{
-            [string[]]$scopes = '{0}/{1}' -f $ScopesUri,'.default'
+        else
+        {
+            [string[]]$scopes = '{0}/{1}' -f $ScopesUri, '.default'
         }
     }
-    else{
+    else
+    {
         # Means user may provide one Resource (Azure limitation) but multiple permissions
         $TempArray = @()
-        Foreach($Permission in $Permissions){
-            if($CustomResource -match '\\$'){
-                $TempArray += '{0}{1}' -f $ScopesUri,$Permission
+        Foreach ($Permission in $Permissions)
+        {
+            if ($CustomResource -match '\\$')
+            {
+                $TempArray += '{0}{1}' -f $ScopesUri, $Permission
             }
-            else{
-                $TempArray += '{0}/{1}' -f $ScopesUri,$Permission
+            else
+            {
+                $TempArray += '{0}/{1}' -f $ScopesUri, $Permission
             }
         }
         [string[]]$scopes = $TempArray
@@ -265,83 +300,167 @@
     [Microsoft.Identity.Client.AuthenticationResult] $AuthenticationResult = $T = $WAMToken = $null
 
     # This is the memory cache MSAL will use
-    if(-not (Get-variable -Name PublicClientApplications -ErrorAction SilentlyContinue)){
+    if (-not (Get-Variable -Name PublicClientApplications -ErrorAction SilentlyContinue))
+    {
         [System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]] $script:PublicClientApplications = New-Object 'System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]'
     }
 
-    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret','ClientCredentialFlowWithCertificate','OnBehalfFlowWithSecret','OnBehalfFlowWithCertificate','FederatedCredentialFlowWithAssertion')]) {
+    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'OnBehalfFlowWithSecret', 'OnBehalfFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] Confidential application selected"
         $ClientApplicationBuilder = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::Create($ClientId)
         #Common Authority can't be used with this flow
-        $ClientApplicationBuilder.WithAuthority($AzureCloudInstance,$TenantId) | Out-Null
-        if($WithoutCaching){
+        $ClientApplicationBuilder.WithAuthority($AzureCloudInstance, $TenantId) | Out-Null
+        if ($WithoutCaching)
+        {
             Write-Verbose "[$((Get-Date).TimeofDay)] Caching disabled with client credential flow"
             $ClientApplicationBuilder.WithCacheOptions($false) | Out-Null
         }
-        else{
+        else
+        {
             $ClientApplicationBuilder.WithCacheOptions($true) | Out-Null
         }
 
-        switch -regex ($PSBoundParameters.Keys) {
-            'ClientCredentialFlowWithSecret|OnBehalfFlowWithSecret' {
+        switch -regex ($PSBoundParameters.Keys)
+        {
+            'ClientCredentialFlowWithSecret|OnBehalfFlowWithSecret'
+            {
                 $ClientApplicationBuilder.WithClientSecret($ClientSecret) | Out-Null
                 break
             }
-            'ClientCredentialFlowWithCertificate|OnBehalfFlowWithCertificate' {
+            'ClientCredentialFlowWithCertificate|OnBehalfFlowWithCertificate'
+            {
                 $ClientApplicationBuilder.WithCertificate($ClientCertificate) | Out-Null
                 break
             }
-            'FederatedCredentialFlowWithAssertion'{
+            'FederatedCredentialFlowWithAssertion'
+            {
                 #https://learn.microsoft.com/en-us/entra/msal/dotnet/acquiring-tokens/web-apps-apis/confidential-client-assertions
                 $ClientApplicationBuilder.WithClientAssertion($UserAssertion) | Out-Null
                 break
             }
-            default {
+            default
+            {
                 throw 'Should not go there'
             }
         }
 
     }
-    elseif ($PSBoundParameters['SystemManagedIdentity']) {
+    elseif ($PSBoundParameters['SystemManagedIdentity'])
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] System Managed identity selected"
         $ClientApplicationBuilder = [Microsoft.Identity.Client.ManagedIdentityApplicationBuilder]::Create([Microsoft.Identity.Client.AppConfig.ManagedIdentityId]::SystemAssigned)
+        #TODO: Remove this part once ARC for Linux will be fixed by MSAL.Net
+        #Test ARC
+        try
+        {
+            #Test if Arc Agent is running
+            $null = Get-Process himds -ErrorAction stop
+            if ($IsLinux)
+            {
+                Write-Verbose "[$((Get-Date).TimeofDay)] Running with Arc For Linux"
+                $Headers = $null
+                $Headers = @{
+                    'Metadata' = 'true'
+                }
+                switch ($Resource) {
+                    'Keyvault' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://vault.azure.net');break }
+                    'ARM' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://management.azure.com');break }
+                    'GraphAPI' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://graph.microsoft.com');break }
+                    'Storage' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://storage.azure.com');break }
+                    'Monitor' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://monitor.azure.com');break }
+                    'LogAnalytics' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://api.loganalytics.io');break }
+                    'PostGreSql' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://ossrdbms-aad.database.windows.net');break }
+                    default { $EncodedURI = [System.Web.HttpUtility]::UrlEncode($CustomResource) }
+                }
+
+                # Keep the generated token in a local cache. AAD does not like when you hammer the service from ARC servers.
+                $MSIEndpoint = 'http://localhost:40342/metadata/identity/oauth2/token?api-version=2020-06-01'
+                $AudienceURI = '{0}&resource={1}' -f $MSIEndpoint, $EncodedURI
+                Write-Verbose "Using uri: $AudienceURI"
+                [string] $ARCTokensPath = '/var/opt/azcmagent/tokens' #Require read access to /var/opt/azcmagent/tokens
+                # Thi is where keys are generated
+                $ARCTokensPath = Join-Path $ARCTokensPath -ChildPath '*.key'
+
+                #Why 4 ? Why not
+                for ($i = 0; $i -lt 4; $i++)
+                {
+                    $Headers.Add('Authorization', $("Basic $(Get-Content -Path $ARCTokensPath -ErrorAction SilentlyContinue)"))
+                    try
+                    {
+                        $response = Invoke-RestMethod -Uri $AudienceURI -Headers $Headers -ErrorAction stop
+                    }
+                    catch
+                    {
+                        write-debug "Generate local key that will be provided to Entra"
+                    } #This is when the agent generate a new key stored in $ARCTokensPath
+
+                    if ($response)
+                    {
+                        return $response.access_token
+                    }
+                    $Headers.Remove('Authorization')
+                    $i++
+                    Write-Verbose 'wait 1 second...'
+                    Start-Sleep 1
+                }
+
+                Throw('No access token received')
+            }
+        }
+        catch
+        {
+            $null
+        }
+        #################### end part to remove
     }
-    elseif ($PSBoundParameters['UserManagedIdentity']) {
+    elseif ($PSBoundParameters['UserManagedIdentity'])
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] User Managed identity selected"
         $ClientApplicationBuilder = [Microsoft.Identity.Client.ManagedIdentityApplicationBuilder]::Create([Microsoft.Identity.Client.AppConfig.ManagedIdentityId]::WithUserAssignedClientId($ClientId))
     }
-    else {
+    else
+    {
         # used by authorizationCode & Device code
         Write-Verbose "[$((Get-Date).TimeofDay)] Public application selected"
         $ClientApplicationBuilder = [Microsoft.Identity.Client.PublicClientApplicationBuilder]::Create($ClientId)
-        if ($PSBoundParameters['TenantId']) {
+        if ($PSBoundParameters['TenantId'])
+        {
             Write-Verbose "[$((Get-Date).TimeofDay)] Single tenant app used"
-            $ClientApplicationBuilder.WithAuthority($AzureCloudInstance,$TenantId) | Out-Null
+            $ClientApplicationBuilder.WithAuthority($AzureCloudInstance, $TenantId) | Out-Null
         }
-        else {
+        else
+        {
             Write-Verbose "[$((Get-Date).TimeofDay)] Multi tenant app used"
-            $ClientApplicationBuilder.WithAuthority($AzureCloudInstance,'common') | Out-Null
+            $ClientApplicationBuilder.WithAuthority($AzureCloudInstance, 'common') | Out-Null
         }
 
-        if($WAMFlow){
+        if ($WAMFlow)
+        {
             Write-Verbose "[$((Get-Date).TimeofDay)] WAM flow selected"
             #Never succeed to make WAM working straight on pwsh. The method WithBroker does not work.
-            if($TenantId){
+            if ($TenantId)
+            {
                 Write-Verbose "[$((Get-Date).TimeofDay)] Single tenant app used"
-                if($extraScopesToConsent){
+                if ($extraScopesToConsent)
+                {
                     $WAMToken = Get-WAMToken -ClientId $ClientId -RedirectUri $RedirectUri -TenantId $TenantId -AzureCloudInstance $AzureCloudInstance -Scopes $Scopes -extraScopesToConsent $ExtraScopesToConsent
                 }
-                else{
+                else
+                {
                     $WAMToken = Get-WAMToken -ClientId $ClientId -RedirectUri $RedirectUri -TenantId $TenantId -AzureCloudInstance $AzureCloudInstance -Scopes $Scopes
                 }
             }
-            else{
+            else
+            {
                 # Will use the common endpoint
                 Write-Verbose "[$((Get-Date).TimeofDay)] Multi tenant app used"
-                if($extraScopesToConsent){
+                if ($extraScopesToConsent)
+                {
                     $WAMToken = Get-WAMToken -ClientId $ClientId -RedirectUri $RedirectUri -AzureCloudInstance $AzureCloudInstance -Scopes $Scopes -extraScopesToConsent $ExtraScopesToConsent
                 }
-                else{
+                else
+                {
                     $WAMToken = Get-WAMToken -ClientId $ClientId -RedirectUri $RedirectUri -AzureCloudInstance $AzureCloudInstance -Scopes $Scopes
                 }
             }
@@ -349,59 +468,75 @@
             return $WAMToken
             #https://devblogs.microsoft.com/identity/improved-windows-broker-support-with-msal-net/
         }
-        else{
+        else
+        {
             $ClientApplicationBuilder.WithRedirectUri($RedirectUri) | Out-Null
         }
     }
 
-    if($WithDebugLogging){
+    if ($WithDebugLogging)
+    {
         Write-Verbose "[$((Get-Date).TimeofDay)] Debug logging selected"
         #https://learn.microsoft.com/en-us/entra/msal/dotnet/advanced/exceptions/msal-logging#logging-levels
-        $ClientApplicationBuilder.WithLogging([PSMSALNetHelper.Mylogger]::new(), 'piilogging')  | Out-Null
+        $ClientApplicationBuilder.WithLogging([PSMSALNetHelper.Mylogger]::new(), 'piilogging') | Out-Null
     }
 
     $ClientApplication = $ClientApplicationBuilder.Build()
 
-    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret','ClientCredentialFlowWithCertificate','FederatedCredentialFlowWithAssertion')]) {
+    If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
+    {
         #Client credential flow no user cache so no silent
         $AquireTokenParameters = $ClientApplication.AcquireTokenForClient($Scopes)
         $ClientApplication.AcquireTokenForClien
     }
-    elseif($PSBoundParameters[@('SystemManagedIdentity','UserManagedIdentity')]){
+    elseif ($PSBoundParameters[@('SystemManagedIdentity', 'UserManagedIdentity')])
+    {
         $AquireTokenParameters = $ClientApplication.AcquireTokenForManagedIdentity($Scopes)
     }
-    elseif($PSBoundParameters[@('OnBehalfFlowWithCertificate','OnBehalfFlowWithSecret')]){
+    elseif ($PSBoundParameters[@('OnBehalfFlowWithCertificate', 'OnBehalfFlowWithSecret')])
+    {
         $AquireTokenParameters = $ClientApplication.AcquireTokenOnBehalfOf($Scopes, [Microsoft.Identity.Client.UserAssertion]::new($UserAssertion))
     }
-    else{
-        try{
+    else
+    {
+        try
+        {
 
-            $T = $PublicClientApplications | Where-Object { $_.ClientId -eq $ClientId -and $_.AppConfig.RedirectUri -eq $RedirectUri} | Select-Object -Last 1
-            if($null -eq $T){
+            $T = $PublicClientApplications | Where-Object { $_.ClientId -eq $ClientId -and $_.AppConfig.RedirectUri -eq $RedirectUri } | Select-Object -Last 1
+            if ($null -eq $T)
+            {
                 $PublicClientApplications.Add($ClientApplication)
             }
-            else{
+            else
+            {
                 $ClientApplication = $T
             }
 
             [Microsoft.Identity.Client.IAccount]$Account = $ClientApplication.GetAccountsAsync().GetAwaiter().GetResult() | Select-Object -First 1
-            if($null -eq $Account){
+            if ($null -eq $Account)
+            {
                 throw
-            }else{
+            }
+            else
+            {
                 $Account
             }
             Write-Verbose "[$((Get-Date).TimeofDay)] Acquire token silently"
             $AquireTokenParameters = $ClientApplication.AcquireTokenSilent($Scopes, $Account)
         }
-        catch{
-            if($DeviceCodeFlow){
+        catch
+        {
+            if ($DeviceCodeFlow)
+            {
                 Write-Verbose "[$((Get-Date).TimeofDay)] Acquire token with device code"
                 $AquireTokenParameters = $ClientApplication.AcquireTokenWithDeviceCode($Scopes, [DeviceCodeHelper]::GetDeviceCodeResultCallback())
             }
-            else{
+            else
+            {
                 Write-Verbose "[$((Get-Date).TimeofDay)] Acquire token interactively"
                 $AquireTokenParameters = $ClientApplication.AcquireTokenInteractive($Scopes)
-                if($extraScopesToConsent){
+                if ($extraScopesToConsent)
+                {
                     $AquireTokenParameters.WithExtraScopesToConsent($extraScopesToConsent) | Out-Null
                 }
             }
@@ -412,16 +547,21 @@
     # Do the async call to get a token
     $Timeout = New-TimeSpan -Minutes 2
     $tokenSource = New-Object System.Threading.CancellationTokenSource
-    try {
+    try
+    {
         #$AuthenticationResult = $AquireTokenParameters.ExecuteAsync().GetAwaiter().GetResult()
         $taskAuthenticationResult = $AquireTokenParameters.ExecuteAsync($tokenSource.Token)
-        try {
+        try
+        {
             $endTime = [datetime]::Now.Add($Timeout)
-            while (!$taskAuthenticationResult.IsCompleted) {
-                if ($Timeout -eq [timespan]::Zero -or [datetime]::Now -lt $endTime) {
+            while (!$taskAuthenticationResult.IsCompleted)
+            {
+                if ($Timeout -eq [timespan]::Zero -or [datetime]::Now -lt $endTime)
+                {
                     Start-Sleep -Seconds 1
                 }
-                else {
+                else
+                {
                     $tokenSource.Cancel()
                     $taskAuthenticationResult.Wait()
                     #try { $taskAuthenticationResult.Wait() }
@@ -430,8 +570,10 @@
                 }
             }
         }
-        finally {
-            if (!$taskAuthenticationResult.IsCompleted) {
+        finally
+        {
+            if (!$taskAuthenticationResult.IsCompleted)
+            {
                 Write-Warning 'Canceling Token Acquisition for Application with ClientId [{0}]' -f $ClientApplication.ClientId
                 $tokenSource.Cancel()
             }
@@ -439,17 +581,21 @@
         }
 
         ## Parse task results
-        if ($taskAuthenticationResult.IsFaulted) {
+        if ($taskAuthenticationResult.IsFaulted)
+        {
             Write-Error -Exception $taskAuthenticationResult.Exception -Category ([System.Management.Automation.ErrorCategory]::AuthenticationError) -CategoryActivity $MyInvocation.MyCommand -ErrorId 'GetMsalTokenFailureAuthenticationError' -TargetObject $AquireTokenParameters -ErrorAction Stop
         }
-        if ($taskAuthenticationResult.IsCanceled) {
+        if ($taskAuthenticationResult.IsCanceled)
+        {
             Write-Error -Exception (New-Object System.Threading.Tasks.TaskCanceledException $taskAuthenticationResult) -Category ([System.Management.Automation.ErrorCategory]::OperationStopped) -CategoryActivity $MyInvocation.MyCommand -ErrorId 'GetMsalTokenFailureOperationStopped' -TargetObject $AquireTokenParameters -ErrorAction Stop
         }
-        else {
+        else
+        {
             $AuthenticationResult = $taskAuthenticationResult.Result
         }
     }
-    catch {
+    catch
+    {
         Write-Error -Exception ($_.Exception) -Category ([System.Management.Automation.ErrorCategory]::AuthenticationError) -CategoryActivity $MyInvocation.MyCommand -ErrorId 'GetMsalTokenFailureAuthenticationError' -TargetObject $AquireTokenParameters -ErrorAction Stop
     }
 
