@@ -307,6 +307,8 @@ Error received:
 
 Bug declared in [MSAL.net github repository](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/4358).
 
+**Update:** In 0.0.7 a temporary fix has been implemented to generate a token withoit relying on MSAL until the MSAL.Net fix the issue.
+
 ### Federated credentials
 
 #### From a managed or non managed **Kubernetes cluster**
