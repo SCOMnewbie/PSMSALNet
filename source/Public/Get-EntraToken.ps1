@@ -215,7 +215,13 @@
         [Parameter(ParameterSetName = 'DeviceCodeFlow')]
         [string[]]$ExtraScopesToConsent,
 
-        [switch]$WithDebugLogging
+        [switch]$WithDebugLogging,
+
+        [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
+        [Parameter(ParameterSetName = 'WAMFlow')]
+        [Parameter(ParameterSetName = 'DeviceCodeFlow')]
+        [switch]$WithLocalCaching
+
     )
 
     Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
@@ -299,11 +305,39 @@
     #Reset main variables
     [Microsoft.Identity.Client.AuthenticationResult] $AuthenticationResult = $T = $WAMToken = $null
 
-    # This is the memory cache MSAL will use
-    if (-not (Get-Variable -Name PublicClientApplications -ErrorAction SilentlyContinue))
+    # Validate first if local cache is requested and if not we will use the memory cache
+    if ($WithLocalCaching)
     {
-        [System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]] $script:PublicClientApplications = New-Object 'System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]'
+        #Loacal cache
+        $Config = @{
+            KeyChainServiceName = "msal_service"
+            KeyChainAccountName = "msal_account"
+            LinuxKeyRingSchema = "com.usts.devtools.tokencache"
+            LinuxKeyRingCollection = "MsalCacheStorage.LinuxKeyRingDefaultCollection"
+            LinuxKeyRingLabel = "MSAL token cache"
+        }
+        $storagePropertiesBuilder = [Microsoft.Identity.Client.Extensions.Msal.StorageCreationPropertiesBuilder]::new("tokens_cache.dat",$PWD,$clientId)
+        $storagePropertiesBuilder = $storagePropertiesBuilder.WithMacKeyChain($config.KeyChainServiceName,$config.KeyChainAccountName)
+        $storagePropertiesBuilder = $storagePropertiesBuilder.WithLinuxKeyring(
+            $Config.LinuxKeyRingSchema,
+            $Config.LinuxKeyRingCollection,
+            $Config.LinuxKeyRingLabel,
+            [Collections.Generic.KeyValuePair`2[String,string]]::New('Version', '1'),
+            [Collections.Generic.KeyValuePair`2[String,String]]::New('product', 'myscript')
+        )
+        $storagePropertiesProps = $storagePropertiesBuilder.Build()
+
+        write-verbose $storagePropertiesProps
     }
+    else
+    {
+        #Memory cache
+        if (-not (Get-Variable -Name PublicClientApplications -ErrorAction SilentlyContinue))
+        {
+            [System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]] $script:PublicClientApplications = New-Object 'System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]'
+        }
+    }
+
 
     If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'OnBehalfFlowWithSecret', 'OnBehalfFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
     {
@@ -363,15 +397,40 @@
                 $Headers = @{
                     'Metadata' = 'true'
                 }
-                switch ($Resource) {
-                    'Keyvault' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://vault.azure.net');break }
-                    'ARM' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://management.azure.com');break }
-                    'GraphAPI' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://graph.microsoft.com');break }
-                    'Storage' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://storage.azure.com');break }
-                    'Monitor' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://monitor.azure.com');break }
-                    'LogAnalytics' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://api.loganalytics.io');break }
-                    'PostGreSql' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://ossrdbms-aad.database.windows.net');break }
-                    default { $EncodedURI = [System.Web.HttpUtility]::UrlEncode($CustomResource) }
+                switch ($Resource)
+                {
+                    'Keyvault'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://vault.azure.net'); break
+                    }
+                    'ARM'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://management.azure.com'); break
+                    }
+                    'GraphAPI'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://graph.microsoft.com'); break
+                    }
+                    'Storage'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://storage.azure.com'); break
+                    }
+                    'Monitor'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://monitor.azure.com'); break
+                    }
+                    'LogAnalytics'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://api.loganalytics.io'); break
+                    }
+                    'PostGreSql'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://ossrdbms-aad.database.windows.net'); break
+                    }
+                    default
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode($CustomResource)
+                    }
                 }
 
                 # Keep the generated token in a local cache. AAD does not like when you hammer the service from ARC servers.
@@ -392,7 +451,7 @@
                     }
                     catch
                     {
-                        write-debug "Generate local key that will be provided to Entra"
+                        Write-Debug 'Generate local key that will be provided to Entra'
                     } #This is when the agent generate a new key stored in $ARCTokensPath
 
                     if ($response)
@@ -482,6 +541,12 @@
     }
 
     $ClientApplication = $ClientApplicationBuilder.Build()
+
+    if($WithLocalCaching){
+        # Cache helper
+        $CacheHelper = [Microsoft.Identity.Client.Extensions.Msal.MsalCacheHelper]::CreateAsync($storagePropertiesProps).Result
+        $CacheHelper.RegisterCache($ClientApplication.UserTokenCache)
+    }
 
     If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
     {
