@@ -5,15 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
--N/A
-
 ### Fixed
 
 - N/A
 
-- ## [0.0.7] - 2023-10-16
+## [0.0.8] - 2023-10-24
+
+### Added
+
+- MSAL cache on filesystem available for public application (Auth code with PKCE, device code) to be resilient to console restart.
+- Examples to use local MSAL token serialization.
+
+### Fixed
+
+- Clean useless code regarding client credential flow.
+
+## [0.0.7] - 2023-10-16
 
 ### Fixed
 

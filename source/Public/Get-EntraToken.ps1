@@ -51,6 +51,12 @@
     The ExtraScopesToConsent parameter defines the extra scopes you need following the Entra limitation where you can call only one resource per call. Thi parameter is useful when you need Graph API and ARM token.
     .PARAMETER WithDebugLogging
     The WithDebugLogging enable the MSAL library logging.
+    .PARAMETER WithLocalCaching
+    The WithLocalCaching enable the MSAL library usage on the filesystem instead of the default memory. The cache file will be called tokens_cache.dat. For Linux, make sure Keyring is installed or use with WithUnprotectedTokenSerialization instead (WSL)
+    .PARAMETER TokenSerializationPath
+    The TokenSerializationPath let you define where to store the cache file. By default it will be in the current directory.
+    .PARAMETER WithUnprotectedTokenSerialization
+    The WithUnprotectedTokenSerialization let you store the generated token in plaintext on the filesystem.
     .EXAMPLE
 
     $HashArguments = @{
@@ -99,10 +105,45 @@
     Get-EntraToken -FederatedCredentialFlowWithAssertion -UserAssertion $KubeSaToken -ClientId $([Environment]::GetEnvironmentVariable('AZURE_CLIENT_ID')) -TenantId $([Environment]::GetEnvironmentVariable('AZURE_TENANT_ID')) -Resource GraphAPI
 
     This command will generate a token to access Graph API (/.default) scope from a Kubernetes pod.
+    .EXAMPLE
+
+    $HashArguments = @{
+        ClientId = $clientId
+        TenantId = $TenantId
+        RedirectUri = 'http://localhost'
+        Resource = 'GraphAPI'
+        Permissions = @('user.read','group.read.all')
+        WithLocalCaching = $true
+        TokenSerializationPath = 'C:\TEMP'
+        verbose = $true
+    }
+
+    Get-EntraToken -PublicAuthorizationCodeFlow @HashArguments
+
+    This command will generate a token with auth code flow to access Graph API scope with all application permissions added in the request. The token generated token will be encrypted on the filesystem depending of the operating system capabilities. Windows will use DPAPI, MAC Keychain and for Linux make sure Kyring is installed.
+    .EXAMPLE
+
+    $HashArguments = @{
+        ClientId = $clientId
+        TenantId = $TenantId
+        RedirectUri = 'http://localhost'
+        Resource = 'GraphAPI'
+        Permissions = @('user.read','group.read.all')
+        WithLocalCaching = $true
+        WithUnprotectedTokenSerialization = $true
+        verbose = $true
+    }
+
+    Get-EntraToken -DeviceCodeFlow @HashArguments
+
+    This command will generate a token with device code flow to access Graph API scope with all application permissions added in the request. The token generated token will be in plaintext on the filesystem (WSL) in the current directory.
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON
         initial version
+    2023/10/23 | Francois LEON
+        Token serialization
+        Azure ARC tokens
     #>
     [cmdletbinding()]
     [OutputType([Microsoft.Identity.Client.AuthenticationResult])]
@@ -215,7 +256,25 @@
         [Parameter(ParameterSetName = 'DeviceCodeFlow')]
         [string[]]$ExtraScopesToConsent,
 
-        [switch]$WithDebugLogging
+        [switch]$WithDebugLogging,
+
+        [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
+        [Parameter(ParameterSetName = 'DeviceCodeFlow')]
+        [switch]$WithLocalCaching,
+
+        [ValidateScript({
+            if(-Not ([System.IO.Directory]::Exists($_)) ){
+                throw "Folder does not exist"
+            }
+            return $true
+        })]
+        [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
+        [Parameter(ParameterSetName = 'DeviceCodeFlow')]
+        [string]$TokenSerializationPath = $null,
+
+        [Parameter(ParameterSetName = 'PublicAuthorizationCodeFlow')]
+        [Parameter(ParameterSetName = 'DeviceCodeFlow')]
+        [switch]$WithUnprotectedTokenSerialization
     )
 
     Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
@@ -299,11 +358,53 @@
     #Reset main variables
     [Microsoft.Identity.Client.AuthenticationResult] $AuthenticationResult = $T = $WAMToken = $null
 
-    # This is the memory cache MSAL will use
-    if (-not (Get-Variable -Name PublicClientApplications -ErrorAction SilentlyContinue))
-    {
-        [System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]] $script:PublicClientApplications = New-Object 'System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]'
-    }
+     # Validate first if local cache is requested and if not we will use the memory cache
+     if ($WithLocalCaching)
+     {
+         Write-Verbose "[$((Get-Date).TimeofDay)] Use or build MSAL local cache on the filesystem"
+
+         if([string]::IsNullOrEmpty($TokenSerializationPath)){
+            Write-Verbose "[$((Get-Date).TimeofDay)] Set default token serialization path to current directory"
+            $TokenSerializationPath = $PWD
+         }
+
+         #Loacal cache
+         $Config = @{
+             KeyChainServiceName    = 'msal_service'
+             KeyChainAccountName    = 'msal_account'
+             LinuxKeyRingSchema     = 'com.usts.devtools.tokencache'
+             LinuxKeyRingCollection = 'MsalCacheStorage.LinuxKeyRingDefaultCollection'
+             LinuxKeyRingLabel      = 'MSAL token cache'
+         }
+
+         $storagePropertiesBuilder = [Microsoft.Identity.Client.Extensions.Msal.StorageCreationPropertiesBuilder]::new('tokens_cache.dat', $TokenSerializationPath, $clientId)
+
+         if($WithUnprotectedTokenSerialization){
+            Write-Verbose "[$((Get-Date).TimeofDay)] Generated token saved in plaintext on filesystem"
+            $storagePropertiesBuilder = $storagePropertiesBuilder.WithUnprotectedFile()
+        }
+        else{
+            $storagePropertiesBuilder = $storagePropertiesBuilder.WithMacKeyChain($config.KeyChainServiceName, $config.KeyChainAccountName)
+            $storagePropertiesBuilder = $storagePropertiesBuilder.WithLinuxKeyring(
+             $Config.LinuxKeyRingSchema,
+             $Config.LinuxKeyRingCollection,
+             $Config.LinuxKeyRingLabel,
+             [Collections.Generic.KeyValuePair`2[String, string]]::New('Version', '1'),
+             [Collections.Generic.KeyValuePair`2[String, String]]::New('module', 'PSMSALNet')
+            )
+        }
+
+         $storagePropertiesProps = $storagePropertiesBuilder.Build()
+     }
+     else
+     {
+         #Memory cache
+         Write-Verbose "[$((Get-Date).TimeofDay)] Use MSAL memory cache"
+         if (-not (Get-Variable -Name PublicClientApplications -ErrorAction SilentlyContinue))
+         {
+             [System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]] $script:PublicClientApplications = New-Object 'System.Collections.Generic.List[Microsoft.Identity.Client.IPublicClientApplication]'
+         }
+     }
 
     If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'OnBehalfFlowWithSecret', 'OnBehalfFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
     {
@@ -363,15 +464,40 @@
                 $Headers = @{
                     'Metadata' = 'true'
                 }
-                switch ($Resource) {
-                    'Keyvault' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://vault.azure.net');break }
-                    'ARM' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://management.azure.com');break }
-                    'GraphAPI' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://graph.microsoft.com');break }
-                    'Storage' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://storage.azure.com');break }
-                    'Monitor' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://monitor.azure.com');break }
-                    'LogAnalytics' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://api.loganalytics.io');break }
-                    'PostGreSql' { $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://ossrdbms-aad.database.windows.net');break }
-                    default { $EncodedURI = [System.Web.HttpUtility]::UrlEncode($CustomResource) }
+                switch ($Resource)
+                {
+                    'Keyvault'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://vault.azure.net'); break
+                    }
+                    'ARM'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://management.azure.com'); break
+                    }
+                    'GraphAPI'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://graph.microsoft.com'); break
+                    }
+                    'Storage'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://storage.azure.com'); break
+                    }
+                    'Monitor'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://monitor.azure.com'); break
+                    }
+                    'LogAnalytics'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://api.loganalytics.io'); break
+                    }
+                    'PostGreSql'
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode('https://ossrdbms-aad.database.windows.net'); break
+                    }
+                    default
+                    {
+                        $EncodedURI = [System.Web.HttpUtility]::UrlEncode($CustomResource)
+                    }
                 }
 
                 # Keep the generated token in a local cache. AAD does not like when you hammer the service from ARC servers.
@@ -392,7 +518,7 @@
                     }
                     catch
                     {
-                        write-debug "Generate local key that will be provided to Entra"
+                        Write-Debug 'Generate local key that will be provided to Entra'
                     } #This is when the agent generate a new key stored in $ARCTokensPath
 
                     if ($response)
@@ -483,11 +609,18 @@
 
     $ClientApplication = $ClientApplicationBuilder.Build()
 
+    if ($WithLocalCaching)
+    {
+        # Cache helper
+        Write-Verbose "[$((Get-Date).TimeofDay)] Try to load the local cache in MSAL memory"
+        $CacheHelper = [Microsoft.Identity.Client.Extensions.Msal.MsalCacheHelper]::CreateAsync($storagePropertiesProps).Result
+        $CacheHelper.RegisterCache($ClientApplication.UserTokenCache)
+    }
+
     If ($PSBoundParameters[@('ClientCredentialFlowWithSecret', 'ClientCredentialFlowWithCertificate', 'FederatedCredentialFlowWithAssertion')])
     {
         #Client credential flow no user cache so no silent
         $AquireTokenParameters = $ClientApplication.AcquireTokenForClient($Scopes)
-        $ClientApplication.AcquireTokenForClien
     }
     elseif ($PSBoundParameters[@('SystemManagedIdentity', 'UserManagedIdentity')])
     {
@@ -503,12 +636,17 @@
         {
 
             $T = $PublicClientApplications | Where-Object { $_.ClientId -eq $ClientId -and $_.AppConfig.RedirectUri -eq $RedirectUri } | Select-Object -Last 1
-            if ($null -eq $T)
+            if($WithLocalCaching -AND ($null -ne $ClientApplication)){
+                Write-Verbose "[$((Get-Date).TimeofDay)] Let's use the local filesystem cache"
+            }
+            elseif ($null -eq $T)
             {
+                Write-Verbose "[$((Get-Date).TimeofDay)] No account found in memory cache, let's add it for the next run"
                 $PublicClientApplications.Add($ClientApplication)
             }
             else
             {
+                Write-Verbose "[$((Get-Date).TimeofDay)] Account found in memory cache, let's use it"
                 $ClientApplication = $T
             }
 
@@ -519,7 +657,7 @@
             }
             else
             {
-                $Account
+                $Account | Out-Null
             }
             Write-Verbose "[$((Get-Date).TimeofDay)] Acquire token silently"
             $AquireTokenParameters = $ClientApplication.AcquireTokenSilent($Scopes, $Account)
