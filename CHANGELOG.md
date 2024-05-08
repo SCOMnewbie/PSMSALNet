@@ -5,9 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bump in MSAL version
+
 ### Fixed
 
-- N/A
+-  Add FR language support in ConvertTo-X509Certificate2.Tests.ps1 to validate error message.
 
 ## [0.0.8] - 2023-10-24
 
