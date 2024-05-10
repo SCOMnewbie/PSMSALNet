@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump in MSAL version (4.60.3) + all external dependencies
 - Add Get-EntraToken more managed identity exemples into the functions
+- Bump to net8.0 (Powershell 7.4)
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 # PSMSALNet Module
 
-:warning: This is a **Powershel 7.2** module minimum but should work on Linux/MAC/Windows.
+:warning: This is a **Powershel 7.4** module minimum but should work on Linux/MAC/Windows.
 
 This project wraps [MSAL.NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) functionality into PowerShell-friendly cmdlets. The goal is not to implement every flows MSAL can propose but the more useful and secured ones. Flow like ROPC or windows integrated flow won't be implemented for security reasons.
 
