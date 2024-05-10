@@ -137,6 +137,16 @@
     Get-EntraToken -DeviceCodeFlow @HashArguments
 
     This command will generate a token with device code flow to access Graph API scope with all application permissions added in the request. The token generated token will be in plaintext on the filesystem (WSL) in the current directory.
+    .EXAMPLE
+
+    Get-EntraToken -SystemManagedIdentity -Resource GraphAPI -WithDebugLogging -Verbose
+
+    This command will generate a token from system managed identity with MSAL debug logs
+    .EXAMPLE
+
+    Get-EntraToken -UserManagedIdentity -ClientId <User assigned MSI AppId> -Resource ARM | % AccessToken | clip
+
+    This command will generate a token from user managed identity to access the Azure Resource Management scope
     .NOTES
     VERSION HISTORY
     2023/09/23 | Francois LEON
@@ -144,6 +154,8 @@
     2023/10/23 | Francois LEON
         Token serialization
         Azure ARC tokens
+    2024/05/10 | Francois LEON
+        Add managed identity examples
     #>
     [cmdletbinding()]
     [OutputType([Microsoft.Identity.Client.AuthenticationResult])]

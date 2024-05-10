@@ -5,9 +5,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
 - N/A
+
+## [0.0.9] - 2024-05-10
+
+### Added
+
+- Bump in MSAL version (4.60.3) + all external dependencies
+- Add Get-EntraToken more managed identity exemples into the functions
+- Bump to net8.0 (Powershell 7.4)
+
+### Fixed
+
+-  Add FR language support in ConvertTo-X509Certificate2.Tests.ps1 to validate error message.
 
 ## [0.0.8] - 2023-10-24
 

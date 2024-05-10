@@ -258,7 +258,14 @@ m0kSdGoh0ljQDdS6tnz5ou1uXwc7DnTEJYnrKXLGAsboBwcqN77thaNAGdhkQ1Qw
                 $LinPKPath = "$PSScriptRoot{0}..{0}..{0}helpers{0}wrongprivatekey_rsa.key" -f $DS
                 $securestring = ConvertTo-SecureString -String 'wrongpass' -AsPlainText -Force
                 If ($IsWindows) {
-                    { ConvertTo-X509Certificate2 -PfxPath $WinPath -Password $securestring } | Should -Throw -ExpectedMessage '*The specified network password is not correct.*'
+                    If($PSUICulture -eq  'fr-FR'){
+                        #FR
+                        { ConvertTo-X509Certificate2 -PfxPath $WinPath -Password $securestring } | Should -Throw -ExpectedMessage '*Le mot de passe réseau spécifié est incorrect.*'
+                    }
+                    else{
+                        #EN
+                        { ConvertTo-X509Certificate2 -PfxPath $WinPath -Password $securestring } | Should -Throw -ExpectedMessage '*The specified network password is not correct.*'
+                    }
                 }
                 else {
                     { ConvertTo-X509Certificate2 -PemPath $LinPath -PrivateKeyPath $LinPKPath } | Should -Throw -ExpectedMessage '*error:0200007D:rsa routines*'

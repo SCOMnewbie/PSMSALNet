@@ -7,13 +7,11 @@ $ProjectName = ((Get-ChildItem -Path $ProjectPath\*\*.psd1).Where{
 
 Import-Module $ProjectName
 
-InModuleScope $ProjectName {
-    Describe Get-EntraToken{
-        Context 'Default' {
+Describe Get-EntraToken{
+    Context 'Public Client from ClientApplication' {
 
-            It 'Unit tests to implement' {
-                $true | Should -BeTrue
-            }
+        It 'Unit tests to implement' {
+            $true | Should -BeTrue
         }
     }
 }
