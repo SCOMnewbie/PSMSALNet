@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Bump in MSAL version
+- N/A
+
+## [0.0.9] - 2024-05-10
+
+### Added
+
+- Bump in MSAL version (4.60.3) + all external dependencies
+- Add Get-EntraToken more managed identity exemples into the functions
 
 ### Fixed
 
