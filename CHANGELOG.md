@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## [0.1.1] - 2024-11-02 
+
+### Added
+
+- Bump MSAL version to 4.66.1 + all external dependencies
+  
+### Tested
+
+#### Public Authorization Code Flow (PKCE)
+
+[x] Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -Verbose
+[x] Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -WithDebugLogging -Verbose
+[x] Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -WithDebugLogging -WithLocalCaching -Verbose
+[x] Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -WithDebugLogging -WithLocalCaching -TokenSerializationPath C:\TEMP -verbose
+[x] Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -ExtraScopesToConsent @("api://PSMSALNet-backend/Access.AsUser")
+[x]  Get-EntraToken -PublicAuthorizationCodeFlow -ClientId $clientID -TenantId $TenantId -Resource Custom -CustomResource "api://PSMSALNet-backend" -Permissions @("Access.AsUser")
+
+#### Public Device Code Flow
+[x] Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read")
+[ ] Get-EntraToken -DeviceCodeFlow -ClientId $ClientId -TenantId $TenantId -Resource GraphAPI -Permissions @("user.read") -WithDebugLogging ->No logs provided
+
+#### WAM Flow
+[x] Get-EntraToken -WAMFlow -ClientId $ClientId -TenantId $TenantId -RedirectUri "ms-appx-web://Microsoft.AAD.BrokerPlugin/$clientId" -Resource GraphAPI -Permissions @("user.read")
+
+#### OBO with secret
+[x] Get-EntraToken -OnBehalfFlowWithSecret -ClientId '<backend clientId>' -ClientSecret '<backend secret>' -UserAssertion <token generated with client> -TenantId $tenantId -Resource GraphAPI -Permissions @("User.Read.All")
+
+#### Client credential flow secret
+
+[x] Get-EntraToken -ClientCredentialFlowWithSecret -ClientId $ClientId -ClientSecret $ClientSecret -TenantId $tenantId -Resource GraphAPI -WithDebugLogging
+
+#### Client credential with certificate
+$X509 = ConvertTo-X509Certificate2 -PfxPath C:\TEMP\testcertauth.pfx -Password $(ConvertTo-SecureString -String 'CertPassword' -AsPlainText -Force) -Verbose
+[x] Get-EntraToken -ClientCredentialFlowWithCertificate -ClientId $ClientId -TenantId $TenantId -ClientCertificate $X509 -Resource GraphAPI -WithDebugLogging -Verbose
+
+#### OBO with certificate
+$X509 = ConvertTo-X509Certificate2 -PfxPath C:\TEMP\testcertauth.pfx -Password $(ConvertTo-SecureString -String 'CertPassword' -AsPlainText -Force) -Verbose
+$t = Get-EntraToken -PublicAuthorizationCodeFlow -ClientId <Front ClientId> -TenantId $TenantId -Resource Custom -CustomResource api://PSMSALNet-backend -Permissions @("Access.AsUser") | % AccessToken
+[x] Get-EntraToken -OnBehalfFlowWithCertificate -ClientId '<backend clientId>' -ClientCertificate $X509 -UserAssertion $t -TenantId $TenantId -Resource GraphAPI -Permissions @("User.Read.All")
+
+#### Federated Flow (Not tested yet)
+
 ## [0.1.0] - 2024-05-15
 
 ### Added
