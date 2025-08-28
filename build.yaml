@@ -17,7 +17,7 @@ Encoding: UTF8
 # using GitVersion is not available, and it is not possible to set the session environment
 # variable `$env:ModuleVersion`, nor setting the variable `$ModuleVersion`, in the
 # PowerShell session (parent scope) before running the task `build`.
-SemVer: '0.1.1'
+SemVer: '0.1.2'
 
 # Suffix to add to Root module PSM1 after merge (here, the Set-Alias exporting IB tasks)
 # suffix: suffix.ps1

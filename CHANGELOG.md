@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## [0.1.2] - 2025-08-28 
+
+### Added
+
+- Added EventHUB audience as non custom audience
+
 ## [0.1.1] - 2024-11-02 
 
 ### Added
