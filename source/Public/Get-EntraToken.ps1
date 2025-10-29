@@ -251,7 +251,7 @@
 
         #Scope = Resource + Permission
         [parameter(Mandatory)]
-        [ValidateSet('Keyvault', 'ARM', 'GraphAPI', 'Storage', 'Monitor', 'LogAnalytics', 'PostGreSql', 'EventHUB', 'Custom')] #TODO: valider Graph API not sure it's working
+        [ValidateSet('Keyvault', 'ARM', 'GraphAPI', 'Storage', 'Monitor', 'LogAnalytics', 'PostGreSql', 'EventHUB', 'Kusto', 'Custom')] #TODO: valider Graph API not sure it's working
         [string] $Resource,
 
         [string] $CustomResource = $null, #https:// ... should be used only with Custom Audience like api://<your api>
@@ -332,6 +332,10 @@
         'EventHUB'
         {
             $ScopesUri = 'https://eventhubs.azure.net'; break
+        }
+        'Kusto'
+        {
+            $ScopesUri = 'https://api.kusto.windows.net'; break
         }
         default
         {
